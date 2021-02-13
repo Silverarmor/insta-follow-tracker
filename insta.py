@@ -5,14 +5,10 @@ import os
 from datetime import datetime
 from discord_webhook import DiscordWebhook, DiscordEmbed
 import time
-import logging
 
 # Initialise Time
 now = datetime.now()
 init_time = now.strftime("%H:%M:%S")
-
-# Initialise Logging
-logging.basicConfig(level=logging.ERROR, filename='log.log', format='%(asctime)s %(levelname)s:%(message)s', encoding='utf-8')
 
 # # Uncomment if you want to prompt user for account to scrape. Else will use credentials.py's version
 # scrape_username = input("Enter an Instagram account's username to scrape it's data: ")
@@ -57,7 +53,7 @@ except:
 
 # Scrape Instagram following
 try:
-    # Try to get the users following the scrape user, as aTuple
+    # Try to get the users following the scrape user, as a Tuple
     following = client.get_following(user=scrape_username, count=None, use_api=False, callback_frequency=100)
     # Changing from Tuple to List (Taking only the first item in Tuple)
     following = following[0]
@@ -67,6 +63,13 @@ except InvalidUserError:
 except PrivateAccountError:
     # Exception raised if the account you are trying to scrape is private
     print('{} is a private account'.format(username))
+except:
+    client.disconnect()
+
+# Scrape Instagram profile information
+try:
+    # Scrape profile into 'profile' object
+    profile = client.get_profile(scrape_username)
 except:
     client.disconnect()
 
@@ -151,36 +154,35 @@ nolonger_following_me_only = string_divide(nolonger_following_me_only, split_len
 
 # WEBHOOK SENDING
 # Webhook Config
-webhook = DiscordWebhook(url=discord_webhook_url)
+webhook = DiscordWebhook(url=discord_webhook_url, avatar_url="https://i.imgur.com/IpIG5TP.png", username="Instagram Statistics Tracker")
 footer_text = "Silverarmor's Instagram tracking of " + scrape_username
 
-# # Webhook Initial Message
+# # Webhook Data Message
 # VARS
-init_description = """ """
-init_field_1 = """"""
-init_field_2 = """"""
-init_field_3 = """"""
-init_field_4 = """"""
+data_description = "**Ran Successfully**\nTracking " + scrape_username
+data_details = "**Name** - " + str(profile.name) + "\n**Private** - " + str(profile.is_private) + "\n**Business Account** - " + str(profile.is_business_account) +  "\n**Posts Count** - " + str(profile.post_count)
 
 # Colours
-color_init = ""
-color_nolonger_following_me = ""
-color_new_following_me = ""
-color_nolonger_following_them = ""
-color_new_following_them = ""
-color_no_change = ""
+color_data = 0x7289da
+color_nolonger_following_me = 0xFF0000
+color_new_following_me = 0x00FF00
+color_nolonger_following_them = 0xFFFF00
+color_new_following_them = 0xFFA500
+color_no_change = 0xbfff00
 
-# Create embed object for webhook
-embed = DiscordEmbed(title="Silverarmor's Instagram Tracker", description=init_description, color=color_init)
+
+# General Data Webhook
+embed = DiscordEmbed(title="Silverarmor's Instagram Tracker", description=data_description, color=color_data)
 embed.set_timestamp()
-embed.set_footer(text=footer_text)
+embed.set_footer(text="Initialised at " + str(init_time))
 
 embed.set_thumbnail(url='https://i.imgur.com/IpIG5TP.png')
 
-embed.add_embed_field(name="Field 1", value=init_field_1, inline=False)
-embed.add_embed_field(name="Field 2", value=init_field_2, inline=False)
-embed.add_embed_field(name="Field 3", value=init_field_3, inline=False)
-embed.add_embed_field(name="Field 4", value=init_field_4, inline=False)
+embed.add_embed_field(name="Basic Data", value="**Followers Count** - " + str(profile.follower_count) + "\n**Following Count** - " + str(profile.followed_count), inline=False)
+embed.add_embed_field(name="Bio", value=profile.biography, inline=False)
+embed.add_embed_field(name="Details", value=data_details, inline=False)
+# embed.add_embed_field(name="Data 4", value="Data 4", inline=False)
+
 
 # Add embed object to webhook
 webhook.add_embed(embed)
@@ -190,16 +192,12 @@ if len(nolonger_following_me_only) > 0:
     for msg in nolonger_following_me_only:
         # Create embed object for webhook
         embed = DiscordEmbed(title="Users who stopped following you :angry:", description=msg, color=color_nolonger_following_me)
-        embed.set_timestamp()
-        embed.set_footer(text=footer_text)
         # Add embed object to webhook
         webhook.add_embed(embed)
         time.sleep(0.5)
 elif len(nolonger_following_me_only) == 0:
     # Create embed object for webhook
     embed = DiscordEmbed(title="Users who stopped following you :angry:", description="None today!", color=color_no_change)
-    embed.set_timestamp()
-    embed.set_footer(text=footer_text)
     # Add embed object to webhook
     webhook.add_embed(embed)
     time.sleep(0.5)
@@ -209,16 +207,12 @@ if len(new_following_me_only) > 0:
     for msg in new_following_me_only:
         # Create embed object for webhook
         embed = DiscordEmbed(title="Users who started following you", description=msg, color=color_new_following_me)
-        embed.set_timestamp()
-        embed.set_footer(text=footer_text)
         # Add embed object to webhook
         webhook.add_embed(embed)
         time.sleep(0.5)
 elif len(new_following_me_only) == 0:
     # Create embed object for webhook
     embed = DiscordEmbed(title="Users who started following you", description="None today!", color=color_no_change)
-    embed.set_timestamp()
-    embed.set_footer(text=footer_text)
     # Add embed object to webhook
     webhook.add_embed(embed)
     time.sleep(0.5)
@@ -228,16 +222,12 @@ if len(nolonger_following_them_only) > 0:
     for msg in nolonger_following_them_only:
         # Create embed object for webhook
         embed = DiscordEmbed(title="Users you stopped following", description=msg, color=color_nolonger_following_them)
-        embed.set_timestamp()
-        embed.set_footer(text=footer_text)
         # Add embed object to webhook
         webhook.add_embed(embed)
         time.sleep(0.5)
 elif len(nolonger_following_them_only) == 0:
     # Create embed object for webhook
     embed = DiscordEmbed(title="Users you stopped following", description="None today!", color=color_no_change)
-    embed.set_timestamp()
-    embed.set_footer(text=footer_text)
     # Add embed object to webhook
     webhook.add_embed(embed)
     time.sleep(0.5)
@@ -247,16 +237,12 @@ if len(new_following_them_only) > 0:
     for msg in new_following_them_only:
         # Create embed object for webhook
         embed = DiscordEmbed(title="Users you started following", description=msg, color=color_new_following_them)
-        embed.set_timestamp()
-        embed.set_footer(text=footer_text)
         # Add embed object to webhook
         webhook.add_embed(embed)
         time.sleep(0.5)
 elif len(new_following_them_only) == 0:
     # Create embed object for webhook
     embed = DiscordEmbed(title="Users you started following", description="None today!", color=color_no_change)
-    embed.set_timestamp()
-    embed.set_footer(text=footer_text)
     # Add embed object to webhook
     webhook.add_embed(embed)
     time.sleep(0.5)
