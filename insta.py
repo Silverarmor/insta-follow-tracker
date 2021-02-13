@@ -42,9 +42,9 @@ except SuspisciousLoginAttemptError as error:
 
 # Scrape Instagram followers
 try:
-    # Scrapes the users followers into a Tuple.
+    # Try to get the users following the scrape user, as aTuple
     followers = client.get_followers(user=scrape_username, count=None, use_api=False, callback_frequency=100)
-    # Changing from Tuple to List
+    # Changing from Tuple to List (Taking only the first item in Tuple)
     followers = followers[0]
 except InvalidUserError:
     # Exception raised if the username is not valid
@@ -57,9 +57,9 @@ except:
 
 # Scrape Instagram following
 try:
-    # Try to get the users following the
+    # Try to get the users following the scrape user, as aTuple
     following = client.get_following(user=scrape_username, count=None, use_api=False, callback_frequency=100)
-    # Changing from Tuple to List
+    # Changing from Tuple to List (Taking only the first item in Tuple)
     following = following[0]
 except InvalidUserError:
     # Exception raised if the username is not valid
