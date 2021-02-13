@@ -84,26 +84,30 @@ if os.path.exists('following_me_only.txt'):
     with open('following_me_only.txt', 'r') as filehandle:
         old_following_me_only = [current_place.rstrip() for current_place in filehandle.readlines()]
 else:
-    print("File does not exist, skipping reading...")
+    print("following_me_only file does not exist, skipping reading...")
     
 if os.path.exists('following_them_only.txt'):
     with open('following_them_only.txt', 'r') as filehandle:
         old_following_them_only = [current_place.rstrip() for current_place in filehandle.readlines()]
 else:
-    print("File does not exist, skipping reading...")
+    print("following_them_only file does not exist, skipping reading...")
 
 # Comparing old and current lists
 if os.path.exists('following_me_only.txt') and os.path.exists('following_them_only.txt'):
     # Following me changes
-    new_following_me_only = set(following_me_only) - set(old_following_me_only)
-    nolonger_following_me_only = set(old_following_me_only) - set(following_me_only)
+    new_following_me_only = list(set(following_me_only) - set(old_following_me_only))
+    nolonger_following_me_only = list(set(old_following_me_only) - set(following_me_only))
 
     # Following them changes
     new_following_them_only = set(following_them_only) - set(old_following_them_only)
     nolonger_following_them_only = set(old_following_them_only) - set(following_them_only)
-
 else:
-    print("Skipping comparing old and current lists")
+    print("Skipping comparing old and current lists. Loading the lists as full")
+    new_following_me_only = following_me_only
+    new_following_them_only = following_them_only
+    # Set nolonger vars as empty to prevent errors.
+    nolonger_following_me_only = ""
+    nolonger_following_them_only = ""
 
 # Overwriting files with new data.
 with open('following_me_only.txt', 'w') as filehandle:
@@ -114,21 +118,44 @@ with open('following_them_only.txt', 'w') as filehandle:
 
 
 # Converting into comma separated string for Discord
-new_following_me_only = (', '.join(new_following_me_only))
-nolonger_following_me_only = (', '.join(nolonger_following_me_only))
+"""NOTE THIS ALSO CHANGES VARS FROM LIST to STR"""
 
-new_following_them_only = (', '.join(new_following_them_only))
-nolonger_following_them_only = (', '.join(nolonger_following_them_only))
+if len(new_following_me_only) >= 0:
+    new_following_me_only = (', '.join(new_following_me_only))
+
+if len(nolonger_following_me_only) >= 0:
+    nolonger_following_me_only = (', '.join(nolonger_following_me_only))
+
+if len(new_following_them_only) >= 0:
+    new_following_them_only = (', '.join(new_following_them_only))
+
+if len(nolonger_following_them_only) >= 0:
+    nolonger_following_them_only = (', '.join(nolonger_following_them_only))
+
+# Escaping the underscore
+new_following_me_only = new_following_me_only.replace("_", "\\_")
+nolonger_following_me_only = nolonger_following_me_only.replace("_", "\\_")
+new_following_them_only = new_following_them_only.replace("_", "\\_")
+nolonger_following_me_only = nolonger_following_me_only.replace("_", "\\_")
 
 # Splitting string into 1000 characters per list, since webhooks' embed description are limited to 1024 characters
 # Maxmimum message length? Will split message(s) into this number if required.
+# Split Function
+def string_divide(string, div):
+       list = []
+       for i in range(0, len(string), div):
+           list.append(string[i:i+div])
+       return list
+
+# Split Length
 split_length = 1000
 
-new_following_me_only = [str[i:i+split_length] for i in range(0, len(str), split_length)]
-nolonger_following_me_only = [str[i:i+split_length] for i in range(0, len(str), split_length)]
+# Splitting
+new_following_me_only = string_divide(new_following_me_only, split_length)
+nolonger_following_me_only = string_divide(nolonger_following_me_only, split_length)
+new_following_them_only = string_divide(new_following_them_only, split_length)
+nolonger_following_me_only = string_divide(nolonger_following_me_only, split_length)
 
-new_following_them_only = [str[i:i+split_length] for i in range(0, len(str), split_length)]
-nolonger_following_them_only = [str[i:i+split_length] for i in range(0, len(str), split_length)]
 
 # WEBHOOK SENDING
 # WEBHOOK CONFIG
@@ -136,57 +163,74 @@ webhook = DiscordWebhook(url=discord_webhook_url)
 footer_text = "Silverarmor's Instagram tracking of " + scrape_username
 
 # # Webhook Initial Message
-# webhook
+# Create embed object for webhook
+embed = DiscordEmbed(title="Silverarmor's Init message", description="it worked", color=0x00FF00)
+embed.set_timestamp()
+embed.set_footer(text=footer_text)
+# Add embed object to webhook
+webhook.add_embed(embed)
+# Send webhook
+time.sleep(1)
+
 
 # nolonger_following_me_only
-for msg in nolonger_following_me_only:
-    # Create embed object for webhook
-    embed = DiscordEmbed(title="Users who stopped following you :angry:", description=msg, color="FF0000")
-    embed.set_timestamp()
-    embed.set_footer(text=footer_text)
-    # Add embed object to webhook
-    webhook.add_embed(embed)
-    # Send webhook
-    response = webhook.execute()
-    time.sleep(1.5)
-
+if len(nolonger_following_me_only) >= 0:
+    for msg in nolonger_following_me_only:
+        # Create embed object for webhook
+        embed = DiscordEmbed(title="Users who stopped following you :angry:", description=msg, color=0xFF0000)
+        embed.set_timestamp()
+        embed.set_footer(text=footer_text)
+        # Add embed object to webhook
+        webhook.add_embed(embed)
+        time.sleep(1)
 
 # new_following_me_only
-for msg in new_following_me_only:
-    # Create embed object for webhook
-    embed = DiscordEmbed(title="Users who started following you", description=msg, color="008000")
-    embed.set_timestamp()
-    embed.set_footer(text=footer_text)
-    # Add embed object to webhook
-    webhook.add_embed(embed)
-    # Send webhook
-    response = webhook.execute()
-    time.sleep(1.5)
+if len(new_following_me_only) >= 0:
+    for msg in new_following_me_only:
+        # Create embed object for webhook
+        embed = DiscordEmbed(title="Users who started following you", description=msg, color=0x008000)
+        embed.set_timestamp()
+        embed.set_footer(text=footer_text)
+        # Add embed object to webhook
+        webhook.add_embed(embed)
+        time.sleep(1)
 
 # new_following_them_only
-for msg in new_following_them_only:
-    # Create embed object for webhook
-    embed = DiscordEmbed(title="Users you started following", description=msg, color="FFFF00")
-    embed.set_timestamp()
-    embed.set_footer(text=footer_text)
-    # Add embed object to webhook
-    webhook.add_embed(embed)
-    # Send webhook
-    response = webhook.execute()
-    time.sleep(1.5)
+if len(new_following_them_only) >= 0:
+    for msg in new_following_them_only:
+        # Create embed object for webhook
+        embed = DiscordEmbed(title="Users you started following", description=msg, color=0xFFFF00)
+        embed.set_timestamp()
+        embed.set_footer(text=footer_text)
+        # Add embed object to webhook
+        webhook.add_embed(embed)
+        time.sleep(1)
 
 # nolonger_following_them_only
-for msg in nolonger_following_them_only:
-    # Create embed object for webhook
-    embed = DiscordEmbed(title="Users you stopped following", description=msg, color="FFA500")
-    embed.set_timestamp()
-    embed.set_footer(text=footer_text)
-    # Add embed object to webhook
-    webhook.add_embed(embed)
-    # Send webhook
-    response = webhook.execute()
-    time.sleep(1.5)
+if len(nolonger_following_them_only) >= 0:
+    for msg in nolonger_following_them_only:
+        # Create embed object for webhook
+        embed = DiscordEmbed(title="Users you stopped following", description=msg, color=0xFFA500)
+        embed.set_timestamp()
+        embed.set_footer(text=footer_text)
+        # Add embed object to webhook
+        webhook.add_embed(embed)
+        time.sleep(1)
 
 # Webhook Final Message
 
+
+# Send webhook
+response = webhook.execute()
+
 print("Completed")
+
+"""
+logging
+
+# Is the logfile NOT empty?
+if os.path.getsize("LOGFILE") != 0:
+
+
+
+"""
