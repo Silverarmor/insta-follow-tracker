@@ -1,37 +1,17 @@
 from instaclient import InstaClient
 from instaclient.errors import *
 from credentials import *
-from selenium import webdriver
 import os
 
 # SCRAPE VARIABLES
-scrape_username = "USERNAME_TO_SCRAPE"
-# scrape_username = input("Enter an Instagram account's username to scrape it's data: ")
-
-
-# !  SERVER options
-chrome_options = webdriver.ChromeOptions()
-
-## LINUX ONLY, disables sandbox
-# chrome_options.add_argument("--no-sandbox")
-
-## If enabled, does NOT open the webdriver
-chrome_options.add_argument("--headless")
-## If running headless, disables the GPU.
-chrome_options.add_argument("--disable-gpu")
-# General fixes
-chrome_options.add_argument("--disable-extensions")
-chrome_options.add_argument("--disable-dev-shm-usage")
-
-# # ENVIRONMENT VARIALBES
-# chrome_options.binary_location = os.environ.get("GOOGLE_CHROME_BIN")
-# driver = webdriver.Chrome(executable_path=os.environ.get("CHROMEDRIVER_PATH"), chrome_options=chrome_options)
+# scrape_username = "USERNAME_TO_SCRAPE"
+scrape_username = input("Enter an Instagram account's username to scrape it's data: ")
 
 # ! SCRAPING
 
 # Create a instaclient object. Place as driver_path argument the path that leads to where you saved the chromedriver.exe file
+# client = InstaClient(driver_path='G:\Programming\insta-follow-tracker\chromedriver.exe', localhost_headless=True)
 client = InstaClient(driver_path='G:\Programming\insta-follow-tracker\chromedriver.exe')
-# client = InstaClient()
 
 try:
     client.login(username=username, password=password) # Go through Login Procedure
@@ -51,10 +31,10 @@ except SuspisciousLoginAttemptError as error:
 
 # Scrape Instagram followers
 try:
-    # This will try to get the user's first 100 followers
+    # Scrapes the users followers into a Tuple.
     followers = client.get_followers(user=scrape_username, count=None, use_api=False, callback_frequency=25)
-    print(followers)
-    print(type(followers))
+    # Changing from Tuple to List
+    followers = followers[0]
 except InvalidUserError:
     # Exception raised if the username is not valid
     print('The username is not valid')
@@ -62,14 +42,14 @@ except PrivateAccountError:
     # Exception raised if the account you are trying to scrape is private
     print('{} is a private account'.format(username))
 except:
-    client.quit()
+    client.disconnect()
 
 # Scrape Instagram following
 try:
     # Try to get the users following the
     following = client.get_following(user=scrape_username, count=None, use_api=False, callback_frequency=25)
-    print(following)
-    print(type(following))
+    # Changing from Tuple to List
+    following = following[0]
 except InvalidUserError:
     # Exception raised if the username is not valid
     print('The username is not valid')
@@ -77,7 +57,15 @@ except PrivateAccountError:
     # Exception raised if the account you are trying to scrape is private
     print('{} is a private account'.format(username))
 except:
-    client.quit()
+    client.disconnect()
 
+not_two_way = list((set(following) ^ set(followers)))
 
-client.quit()
+following_me_only = list((set(not_two_way) ^ set(following)))
+following_them_only = list((set(not_two_way) ^ set(followers)))
+
+print(following_me_only)
+print(following_them_only)
+
+client.disconnect()
+
