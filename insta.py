@@ -3,6 +3,9 @@ from instaclient.errors import *
 from credentials import *
 import os
 from datetime import datetime
+from discord_webhook import DiscordWebhook, DiscordEmbed
+import time
+
 
 # Initialise Time
 now = datetime.now()
@@ -123,13 +126,73 @@ nolonger_following_me_only = (', '.join(nolonger_following_me_only))
 new_following_them_only = (', '.join(new_following_them_only))
 nolonger_following_them_only = (', '.join(nolonger_following_them_only))
 
-# Splitting string into 1800 characters per list, since webhooks are limited to 2000 characters
+# Splitting string into 1000 characters per list, since webhooks' embed description are limited to 1024 characters
+# Maxmimum message length? Will split message(s) into this number if required.
+split_length = 1000
+
+new_following_me_only = [str[i:i+split_length] for i in range(0, len(str), split_length)]
+nolonger_following_me_only = [str[i:i+split_length] for i in range(0, len(str), split_length)]
+
+new_following_them_only = [str[i:i+split_length] for i in range(0, len(str), split_length)]
+nolonger_following_them_only = [str[i:i+split_length] for i in range(0, len(str), split_length)]
+
+# WEBHOOK SENDING
+# WEBHOOK CONFIG
+webhook = DiscordWebhook(url=discord_webhook_url)
+footer_text = "Silverarmor's Instagram tracking of " + scrape_username
+
+# # Webhook Initial Message
+# webhook
+
+# nolonger_following_me_only
+for msg in nolonger_following_me_only:
+    # Create embed object for webhook
+    embed = DiscordEmbed(title="Users who stopped following you :angry:", description=msg, color="FF0000")
+    embed.set_timestamp()
+    embed.set_footer(text=footer_text)
+    # Add embed object to webhook
+    webhook.add_embed(embed)
+    # Send webhook
+    response = webhook.execute()
+    time.sleep(1.5)
 
 
+# new_following_me_only
+for msg in new_following_me_only:
+    # Create embed object for webhook
+    embed = DiscordEmbed(title="Users who started following you", description=msg, color="008000")
+    embed.set_timestamp()
+    embed.set_footer(text=footer_text)
+    # Add embed object to webhook
+    webhook.add_embed(embed)
+    # Send webhook
+    response = webhook.execute()
+    time.sleep(1.5)
 
+# new_following_them_only
+for msg in new_following_them_only:
+    # Create embed object for webhook
+    embed = DiscordEmbed(title="Users you started following", description=msg, color="FFFF00")
+    embed.set_timestamp()
+    embed.set_footer(text=footer_text)
+    # Add embed object to webhook
+    webhook.add_embed(embed)
+    # Send webhook
+    response = webhook.execute()
+    time.sleep(1.5)
 
+# nolonger_following_them_only
+for msg in nolonger_following_them_only:
+    # Create embed object for webhook
+    embed = DiscordEmbed(title="Users you stopped following", description=msg, color="FFA500")
+    embed.set_timestamp()
+    embed.set_footer(text=footer_text)
+    # Add embed object to webhook
+    webhook.add_embed(embed)
+    # Send webhook
+    response = webhook.execute()
+    time.sleep(1.5)
 
-# Sending Webhook for each item in list
-for each item in list run webhook send thingy
+# Webhook Final Message
 
-
+print("Completed")
