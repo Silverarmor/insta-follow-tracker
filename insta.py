@@ -5,12 +5,14 @@ import os
 from datetime import datetime
 from discord_webhook import DiscordWebhook, DiscordEmbed
 import time
-
+import logging
 
 # Initialise Time
 now = datetime.now()
 init_time = now.strftime("%H:%M:%S")
 
+# Initialise Logging
+logging.basicConfig(level=logging.ERROR, filename='log.log', format='%(asctime)s %(levelname)s:%(message)s', encoding='utf-8')
 
 # # Uncomment if you want to prompt user for account to scrape. Else will use credentials.py's version
 # scrape_username = input("Enter an Instagram account's username to scrape it's data: ")
