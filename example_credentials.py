@@ -1,3 +1,5 @@
-username = ""
-password = ""
-discord_webhook = ""
+username = "instagram"
+password = "password"
+discord_webhook = "https://discord.com/api/webhooks/..."
+scrape_username = "nasa"
+driver_path = "'G:\Example\chromedriver.exe'"
