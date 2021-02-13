@@ -19,8 +19,8 @@ scrape_username = input("Enter an Instagram account's username to scrape it's da
 # ! SCRAPING
 
 # Create a instaclient object. Place as driver_path argument the path that leads to where you saved the chromedriver.exe file
-# client = InstaClient(driver_path='G:\Programming\insta-follow-tracker\chromedriver.exe', localhost_headless=True)
-client = InstaClient(driver_path='G:\Programming\insta-follow-tracker\chromedriver.exe')
+client = InstaClient(driver_path='G:\Programming\insta-follow-tracker\chromedriver.exe', localhost_headless=True)
+# client = InstaClient(driver_path='G:\Programming\insta-follow-tracker\chromedriver.exe')
 
 try:
     # Login
@@ -36,8 +36,6 @@ except SuspisciousLoginAttemptError as error:
     else:
         code = input('Enter the security code that was sent to you via SMS: ')
     client.input_security_code(code)
-
-
 
 # Scrape Instagram followers
 try:
@@ -77,7 +75,6 @@ following_them_only = list((set(following) - set(followers)))
 client.disconnect()
 
 # Reading File & comparing with new strings
-
 # defining empty lists
 old_following_me_only =  []
 old_following_them_only = []
