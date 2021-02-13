@@ -1,0 +1,23 @@
+# Credentials
+CLIENT_SECRET.*
+credentials.*
+
+# Python
+__pycache__
+.mypy_cache
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# vscode
+.vscode
+
+# Jetbrains IDEs; PyCharm/IntelliJ
+.idea
+
