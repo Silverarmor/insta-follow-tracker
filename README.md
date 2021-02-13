@@ -7,3 +7,5 @@
 - `password` - Bot Account password
 - `discord_webhook_url` - URL for Discord Webhook
 - `scrape_username` - What account to scrape
+
+## Generating Discord Webhook URL
