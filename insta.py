@@ -11,6 +11,7 @@ import gspread
 # Initialise Time
 now = datetime.now()
 init_time = now.strftime("%H:%M:%S")
+init_time_with_day = now.strftime("%Y-%m-%d %H:%M:%S.%f")
 
 # # Uncomment if you want to prompt user for account to scrape. Else will use credentials.py's version
 # scrape_username = input("Enter an Instagram account's username to scrape it's data: ")
@@ -82,7 +83,9 @@ following_them_only = list((set(following) - set(followers)))
 # Closing the client to prevent memory leaks
 client.disconnect()
 
-# Reading File & comparing with new strings
+
+# READING FILES & COMPARING WITH NEW STRINGS
+
 # defining empty lists
 old_following_me_only =  []
 old_following_them_only = []
@@ -107,6 +110,14 @@ if os.path.exists('following_me_only.txt') and os.path.exists('following_them_on
 
     new_following_them_only = set(following_them_only) - set(old_following_them_only)
     nolonger_following_them_only = set(old_following_them_only) - set(following_them_only)
+
+    # Creating identicals for gspread use
+    sheet_new_following_me_only = new_following_me_only
+    sheet_nolonger_following_me_only = nolonger_following_me_only
+    sheet_new_following_them_only = new_following_them_only
+    sheet_nolonger_following_them_only = nolonger_following_them_only
+
+
 else:
     print("Skipping comparing old and current lists. Loading the lists as full")
     new_following_me_only = following_me_only
@@ -163,6 +174,7 @@ footer_text = "Silverarmor's Instagram tracking of " + scrape_username
 # VARS
 data_description = "**Ran Successfully**\nTracking " + scrape_username
 data_details = "**Name** - " + str(profile.name) + "\n**Private** - " + str(profile.is_private) + "\n**Business Account** - " + str(profile.is_business_account) +  "\n**Posts Count** - " + str(profile.post_count)
+data_summary  = "**Users who stopped following you** - " + len(nolonger_following_me_only) + "\n**Users who started following you** - " + len(new_following_me_only) + "\n**Users you stopped following** - " + len(nolonger_following_them_only) + "\n**Users you started following** - " + len(new_following_them_only)
 
 # Colours
 color_data = 0x7289da
@@ -182,8 +194,8 @@ embed.set_thumbnail(url='https://i.imgur.com/IpIG5TP.png')
 
 embed.add_embed_field(name="Basic Data", value="**Followers Count** - " + str(profile.follower_count) + "\n**Following Count** - " + str(profile.followed_count), inline=False)
 embed.add_embed_field(name="Bio", value=profile.biography, inline=False)
+embed.add_embed_field(name="Summary", value=data_summary, inline=False)
 embed.add_embed_field(name="Details", value=data_details, inline=False)
-# embed.add_embed_field(name="Data 4", value="Data 4", inline=False)
 
 
 # Add embed object to webhook
@@ -255,4 +267,48 @@ response = webhook.execute()
 
 # LOGGING TO GOOGLE SHEETS
 
-# 
+# Authenticating
+gc = gspread.service_account(filename=service_account_path)
+# Opening Spreadsheet
+spreadsheet = gc.open_by_key('1G6dMArIQvo1eUmnW6oxI1_opk6FwZ8IGKdXvuJOlbRU')
+# Selecting Worksheet
+worksheet = spreadsheet.worksheet(scrape_username)
+
+# Creating data
+"""
+Creating row_data variable (list) for appending to Worksheet
+init_time_with_day: Timestamp with date.
+profile.follower_count: Number of followers
+profile.followed_count: Number of followings
+profile.post_count: Number of posts
+profile.biography: bio
+profile.is_private: private?
+
+x2 of each, length and then string:
+ - nolonger_following_me_only
+ - new_following_me_only
+ - nolonger_following_them_only
+ - new_following_them_only
+"""
+
+row_data = []
+row_data.append(str(init_time_with_day))
+row_data.append(str(strprofile.follower_count)) #int
+row_data.append(str(profile.followed_count)) #int
+row_data.append(str(profile.post_count)) #into
+row_data.append(str(profile.biography))
+row_data.append(str(profile.is_private)) #bool
+row_data.append(str(len(sheet_nolonger_following_me_only))) #int
+row_data.append(str(sheet_nolonger_following_me_only)) #list
+row_data.append(str(len(sheet_new_following_me_only)))
+row_data.append(str(sheet_new_following_me_only)) #list
+row_data.append(str(len(sheet_nolonger_following_them_only)))
+row_data.append(str(sheet_nolonger_following_them_only)) #list
+row_data.append(str(len(sheet_new_following_them_only)))
+row_data.append(str(sheet_new_following_them_only)) #list
+
+
+# Appending to Worksheet
+worksheet.append_row(row_data, value_input_option="USER_ENTERED", insert_data_option="INSERT_ROWS")
+
+
