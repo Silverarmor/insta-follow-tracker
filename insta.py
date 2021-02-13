@@ -12,15 +12,16 @@ now = datetime.now()
 init_time = now.strftime("%H:%M:%S")
 
 
-# SCRAPE VARIABLES
-# scrape_username = "USERNAME_TO_SCRAPE"
-scrape_username = input("Enter an Instagram account's username to scrape it's data: ")
+# # Uncomment if you want to prompt user for account to scrape. Else will use credentials.py's version
+# scrape_username = input("Enter an Instagram account's username to scrape it's data: ")
 
 # ! SCRAPING
 
 # Create a instaclient object. Place as driver_path argument the path that leads to where you saved the chromedriver.exe file
-client = InstaClient(driver_path='G:\Programming\insta-follow-tracker\chromedriver.exe', localhost_headless=True)
-# client = InstaClient(driver_path='G:\Programming\insta-follow-tracker\chromedriver.exe')
+client = InstaClient(driver_path=driver_path, localhost_headless=True)
+
+# Backup where headless is not desired.
+# client = InstaClient(driver_path=driver_path)
 
 try:
     # Login
@@ -94,11 +95,9 @@ else:
 
 # Comparing old and current lists
 if os.path.exists('following_me_only.txt') and os.path.exists('following_them_only.txt'):
-    # Following me changes
     new_following_me_only = list(set(following_me_only) - set(old_following_me_only))
     nolonger_following_me_only = list(set(old_following_me_only) - set(following_me_only))
 
-    # Following them changes
     new_following_them_only = set(following_them_only) - set(old_following_them_only)
     nolonger_following_them_only = set(old_following_them_only) - set(following_them_only)
 else:
@@ -116,23 +115,14 @@ with open('following_me_only.txt', 'w') as filehandle:
 with open('following_them_only.txt', 'w') as filehandle:
     filehandle.writelines("%s\n" % user for user in following_them_only)
 
-
 # Converting into comma separated string for Discord
 """NOTE THIS ALSO CHANGES VARS FROM LIST to STR"""
+new_following_me_only = (', '.join(new_following_me_only))
+nolonger_following_me_only = (', '.join(nolonger_following_me_only))
+new_following_them_only = (', '.join(new_following_them_only))
+nolonger_following_them_only = (', '.join(nolonger_following_them_only))
 
-if len(new_following_me_only) >= 0:
-    new_following_me_only = (', '.join(new_following_me_only))
-
-if len(nolonger_following_me_only) >= 0:
-    nolonger_following_me_only = (', '.join(nolonger_following_me_only))
-
-if len(new_following_them_only) >= 0:
-    new_following_them_only = (', '.join(new_following_them_only))
-
-if len(nolonger_following_them_only) >= 0:
-    nolonger_following_them_only = (', '.join(nolonger_following_them_only))
-
-# Escaping the underscore
+# Escaping any underscores
 new_following_me_only = new_following_me_only.replace("_", "\\_")
 nolonger_following_me_only = nolonger_following_me_only.replace("_", "\\_")
 new_following_them_only = new_following_them_only.replace("_", "\\_")
@@ -147,7 +137,7 @@ def string_divide(string, div):
            list.append(string[i:i+div])
        return list
 
-# Split Length
+# How many chars in each string in the list?
 split_length = 1000
 
 # Splitting
