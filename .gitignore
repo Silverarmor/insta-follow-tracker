@@ -1,6 +1,7 @@
 # Credentials
 CLIENT_SECRET.*
 credentials.*
+service_account.*
 
 # Following Text Files
 following_me_only.txt

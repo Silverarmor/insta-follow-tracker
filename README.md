@@ -8,4 +8,8 @@
 - `discord_webhook_url` - URL for Discord Webhook
 - `scrape_username` - What account to scrape
 
+- Create `service_account.json`
+
 ## Generating Discord Webhook URL
+
+## Creating Google Sheets service account
