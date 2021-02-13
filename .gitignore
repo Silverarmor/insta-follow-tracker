@@ -7,7 +7,8 @@ following_me_only.txt
 following_them_only.txt
 
 # Sensitive Data
-/tools/*
+tools/*
+bfg.jar
 
 # Python
 __pycache__
