@@ -59,13 +59,14 @@ except PrivateAccountError:
 except:
     client.disconnect()
 
-not_two_way = list((set(following) ^ set(followers)))
+# Processing Data
+following_me_only = list((set(followers) - set(following)))
+following_them_only = list((set(following) - set(followers)))
 
-following_me_only = list((set(not_two_way) ^ set(following)))
-following_them_only = list((set(not_two_way) ^ set(followers)))
-
+# Debug Print Statements
 print(following_me_only)
 print(following_them_only)
 
+# Closing the client to prevent memory leaks
 client.disconnect()
 
