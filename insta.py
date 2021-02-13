@@ -148,69 +148,118 @@ nolonger_following_me_only = string_divide(nolonger_following_me_only, split_len
 
 
 # WEBHOOK SENDING
-# WEBHOOK CONFIG
+# Webhook Config
 webhook = DiscordWebhook(url=discord_webhook_url)
 footer_text = "Silverarmor's Instagram tracking of " + scrape_username
 
 # # Webhook Initial Message
+# VARS
+init_description = """ """
+init_field_1 = """"""
+init_field_2 = """"""
+init_field_3 = """"""
+init_field_4 = """"""
+
+# Colours
+color_init = ""
+color_nolonger_following_me = ""
+color_new_following_me = ""
+color_nolonger_following_them = ""
+color_new_following_them = ""
+color_no_change = ""
+
 # Create embed object for webhook
-embed = DiscordEmbed(title="Silverarmor's Init message", description="it worked", color=0x00FF00)
+embed = DiscordEmbed(title="Silverarmor's Instagram Tracker", description=init_description, color=color_init)
 embed.set_timestamp()
 embed.set_footer(text=footer_text)
+
+embed.set_thumbnail(url='https://i.imgur.com/IpIG5TP.png')
+
+embed.add_embed_field(name="Field 1", value=init_field_1, inline=False)
+embed.add_embed_field(name="Field 2", value=init_field_2, inline=False)
+embed.add_embed_field(name="Field 3", value=init_field_3, inline=False)
+embed.add_embed_field(name="Field 4", value=init_field_4, inline=False)
+
 # Add embed object to webhook
 webhook.add_embed(embed)
-# Send webhook
-time.sleep(1)
-
 
 # nolonger_following_me_only
-if len(nolonger_following_me_only) >= 0:
+if len(nolonger_following_me_only) > 0:
     for msg in nolonger_following_me_only:
         # Create embed object for webhook
-        embed = DiscordEmbed(title="Users who stopped following you :angry:", description=msg, color=0xFF0000)
+        embed = DiscordEmbed(title="Users who stopped following you :angry:", description=msg, color=color_nolonger_following_me)
         embed.set_timestamp()
         embed.set_footer(text=footer_text)
         # Add embed object to webhook
         webhook.add_embed(embed)
-        time.sleep(1)
+        time.sleep(0.5)
+elif len(nolonger_following_me_only) == 0:
+    # Create embed object for webhook
+    embed = DiscordEmbed(title="Users who stopped following you :angry:", description="None today!", color=color_no_change)
+    embed.set_timestamp()
+    embed.set_footer(text=footer_text)
+    # Add embed object to webhook
+    webhook.add_embed(embed)
+    time.sleep(0.5)
 
 # new_following_me_only
-if len(new_following_me_only) >= 0:
+if len(new_following_me_only) > 0:
     for msg in new_following_me_only:
         # Create embed object for webhook
-        embed = DiscordEmbed(title="Users who started following you", description=msg, color=0x008000)
+        embed = DiscordEmbed(title="Users who started following you", description=msg, color=color_new_following_me)
         embed.set_timestamp()
         embed.set_footer(text=footer_text)
         # Add embed object to webhook
         webhook.add_embed(embed)
-        time.sleep(1)
-
-# new_following_them_only
-if len(new_following_them_only) >= 0:
-    for msg in new_following_them_only:
-        # Create embed object for webhook
-        embed = DiscordEmbed(title="Users you started following", description=msg, color=0xFFFF00)
-        embed.set_timestamp()
-        embed.set_footer(text=footer_text)
-        # Add embed object to webhook
-        webhook.add_embed(embed)
-        time.sleep(1)
+        time.sleep(0.5)
+elif len(new_following_me_only) == 0:
+    # Create embed object for webhook
+    embed = DiscordEmbed(title="Users who started following you", description="None today!", color=color_no_change)
+    embed.set_timestamp()
+    embed.set_footer(text=footer_text)
+    # Add embed object to webhook
+    webhook.add_embed(embed)
+    time.sleep(0.5)
 
 # nolonger_following_them_only
-if len(nolonger_following_them_only) >= 0:
+if len(nolonger_following_them_only) > 0:
     for msg in nolonger_following_them_only:
         # Create embed object for webhook
-        embed = DiscordEmbed(title="Users you stopped following", description=msg, color=0xFFA500)
+        embed = DiscordEmbed(title="Users you stopped following", description=msg, color=color_nolonger_following_them)
         embed.set_timestamp()
         embed.set_footer(text=footer_text)
         # Add embed object to webhook
         webhook.add_embed(embed)
-        time.sleep(1)
+        time.sleep(0.5)
+elif len(nolonger_following_them_only) == 0:
+    # Create embed object for webhook
+    embed = DiscordEmbed(title="Users you stopped following", description="None today!", color=color_no_change)
+    embed.set_timestamp()
+    embed.set_footer(text=footer_text)
+    # Add embed object to webhook
+    webhook.add_embed(embed)
+    time.sleep(0.5)
 
-# Webhook Final Message
+# new_following_them_only
+if len(new_following_them_only) > 0:
+    for msg in new_following_them_only:
+        # Create embed object for webhook
+        embed = DiscordEmbed(title="Users you started following", description=msg, color=color_new_following_them)
+        embed.set_timestamp()
+        embed.set_footer(text=footer_text)
+        # Add embed object to webhook
+        webhook.add_embed(embed)
+        time.sleep(0.5)
+elif len(new_following_them_only) == 0:
+    # Create embed object for webhook
+    embed = DiscordEmbed(title="Users you started following", description="None today!", color=color_no_change)
+    embed.set_timestamp()
+    embed.set_footer(text=footer_text)
+    # Add embed object to webhook
+    webhook.add_embed(embed)
+    time.sleep(0.5)
 
-
-# Send webhook
+# Send webhook with all created embeds
 response = webhook.execute()
 
 print("Completed")
