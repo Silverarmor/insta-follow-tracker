@@ -6,7 +6,6 @@ from datetime import datetime
 from discord_webhook import DiscordWebhook, DiscordEmbed
 import time
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
 
 
 # Initialise Time
@@ -253,14 +252,7 @@ elif len(new_following_them_only) == 0:
 # Send webhook with all created embeds
 response = webhook.execute()
 
-print("Completed")
 
-"""
-logging
+# LOGGING TO GOOGLE SHEETS
 
-# Is the logfile NOT empty?
-if os.path.getsize("LOGFILE") != 0:
-
-
-
-"""
+# 
