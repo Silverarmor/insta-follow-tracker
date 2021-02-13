@@ -5,6 +5,9 @@ import os
 from datetime import datetime
 from discord_webhook import DiscordWebhook, DiscordEmbed
 import time
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
 
 # Initialise Time
 now = datetime.now()
