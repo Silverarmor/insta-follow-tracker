@@ -2,6 +2,10 @@
 CLIENT_SECRET.*
 credentials.*
 
+# Following Text Files
+following_me_only.txt
+following_them_only.txt
+
 # Python
 __pycache__
 .mypy_cache
