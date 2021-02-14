@@ -277,13 +277,14 @@ elif len(new_following_them_only) == 0:
 # Send webhook with all created embeds
 response = webhook.execute()
 
+print("Webhooks Completed")
 
 # LOGGING TO GOOGLE SHEETS
 
 # Authenticating
 gc = gspread.service_account(filename=service_account_path)
 # Opening Spreadsheet
-spreadsheet = gc.open_by_key('1G6dMArIQvo1eUmnW6oxI1_opk6FwZ8IGKdXvuJOlbRU')
+spreadsheet = gc.open_by_key(sheet_key)
 # Selecting Worksheet
 worksheet = spreadsheet.worksheet(scrape_username)
 
