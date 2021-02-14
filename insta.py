@@ -50,7 +50,7 @@ except InvalidUserError:
     print('The username is not valid')
 except PrivateAccountError:
     # Exception raised if the account you are trying to scrape is private
-    print('{} is a private account'.format(username))
+    print('{} is a private account'.format(scrape_username))
 except:
     client.disconnect()
 
@@ -65,7 +65,7 @@ except InvalidUserError:
     print('The username is not valid')
 except PrivateAccountError:
     # Exception raised if the account you are trying to scrape is private
-    print('{} is a private account'.format(username))
+    print('{} is a private account'.format(scrape_username))
 except:
     client.disconnect()
 
@@ -76,13 +76,12 @@ try:
 except:
     client.disconnect()
 
-# Processing Data
+# Processing Data (finding differences)
 following_me_only = list((set(followers) - set(following)))
 following_them_only = list((set(following) - set(followers)))
 
 # Closing the client to prevent memory leaks
 client.disconnect()
-
 
 # READING FILES & COMPARING WITH NEW STRINGS
 
@@ -107,24 +106,16 @@ else:
 if os.path.exists('following_me_only.txt') and os.path.exists('following_them_only.txt'):
     new_following_me_only = list(set(following_me_only) - set(old_following_me_only))
     nolonger_following_me_only = list(set(old_following_me_only) - set(following_me_only))
-
-    new_following_them_only = set(following_them_only) - set(old_following_them_only)
-    nolonger_following_them_only = set(old_following_them_only) - set(following_them_only)
-
-    # Creating identicals for gspread use
-    sheet_new_following_me_only = new_following_me_only
-    sheet_nolonger_following_me_only = nolonger_following_me_only
-    sheet_new_following_them_only = new_following_them_only
-    sheet_nolonger_following_them_only = nolonger_following_them_only
-
+    new_following_them_only = list(set(following_them_only) - set(old_following_them_only))
+    nolonger_following_them_only = list(set(old_following_them_only) - set(following_them_only))
 
 else:
     print("Skipping comparing old and current lists. Loading the lists as full")
     new_following_me_only = following_me_only
     new_following_them_only = following_them_only
     # Set nolonger vars as empty to prevent errors.
-    nolonger_following_me_only = ""
-    nolonger_following_them_only = ""
+    nolonger_following_me_only = []
+    nolonger_following_them_only = []
 
 # Overwriting files with new data.
 with open('following_me_only.txt', 'w') as filehandle:
@@ -133,12 +124,25 @@ with open('following_me_only.txt', 'w') as filehandle:
 with open('following_them_only.txt', 'w') as filehandle:
     filehandle.writelines("%s\n" % user for user in following_them_only)
 
+# Putting Lengths into variable since I'm lazy.
+length_new_following_me_only = len(new_following_me_only)
+length_nolonger_following_me_only = len(nolonger_following_me_only)
+length_new_following_them_only = len(new_following_them_only)
+length_nolonger_following_them_only = len(nolonger_following_them_only)
+
+
 # Converting into comma separated string for Discord
 """NOTE THIS ALSO CHANGES VARS FROM LIST to STR"""
 new_following_me_only = (', '.join(new_following_me_only))
 nolonger_following_me_only = (', '.join(nolonger_following_me_only))
 new_following_them_only = (', '.join(new_following_them_only))
 nolonger_following_them_only = (', '.join(nolonger_following_them_only))
+
+# Creating identicals for gspread use. String format with commas, but underscores NOT escaped.
+sheet_new_following_me_only = new_following_me_only
+sheet_nolonger_following_me_only = nolonger_following_me_only
+sheet_new_following_them_only = new_following_them_only
+sheet_nolonger_following_them_only = nolonger_following_them_only
 
 # Escaping any underscores
 new_following_me_only = new_following_me_only.replace("_", "\\_")
@@ -162,7 +166,7 @@ split_length = 1000
 new_following_me_only = string_divide(new_following_me_only, split_length)
 nolonger_following_me_only = string_divide(nolonger_following_me_only, split_length)
 new_following_them_only = string_divide(new_following_them_only, split_length)
-nolonger_following_me_only = string_divide(nolonger_following_me_only, split_length)
+nolonger_following_them_only = string_divide(nolonger_following_them_only, split_length)
 
 
 # WEBHOOK SENDING
@@ -174,7 +178,7 @@ footer_text = "Silverarmor's Instagram tracking of " + scrape_username
 # VARS
 data_description = "**Ran Successfully**\nTracking " + scrape_username
 data_details = "**Name** - " + str(profile.name) + "\n**Private** - " + str(profile.is_private) + "\n**Business Account** - " + str(profile.is_business_account) +  "\n**Posts Count** - " + str(profile.post_count)
-data_summary  = "**Users who stopped following you** - " + len(nolonger_following_me_only) + "\n**Users who started following you** - " + len(new_following_me_only) + "\n**Users you stopped following** - " + len(nolonger_following_them_only) + "\n**Users you started following** - " + len(new_following_them_only)
+data_summary  = "**Users who stopped following you** - " + str(length_nolonger_following_me_only) + "\n**Users who started following you** - " + str(length_new_following_me_only) + "\n**Users you stopped following** - " + str(length_nolonger_following_them_only) + "\n**Users you started following** - " + str(length_new_following_them_only)
 
 # Colours
 color_data = 0x7289da
@@ -198,8 +202,11 @@ embed.add_embed_field(name="Summary", value=data_summary, inline=False)
 embed.add_embed_field(name="Details", value=data_details, inline=False)
 
 
-# Add embed object to webhook
+# Send General Data Webhook
 webhook.add_embed(embed)
+response = webhook.execute()
+webhook.remove_embed(0)
+
 
 # nolonger_following_me_only
 if len(nolonger_following_me_only) > 0:
@@ -209,12 +216,14 @@ if len(nolonger_following_me_only) > 0:
         # Add embed object to webhook
         webhook.add_embed(embed)
         time.sleep(0.5)
+
 elif len(nolonger_following_me_only) == 0:
     # Create embed object for webhook
     embed = DiscordEmbed(title="Users who stopped following you :angry:", description="None today!", color=color_no_change)
     # Add embed object to webhook
     webhook.add_embed(embed)
     time.sleep(0.5)
+
 
 # new_following_me_only
 if len(new_following_me_only) > 0:
@@ -224,12 +233,14 @@ if len(new_following_me_only) > 0:
         # Add embed object to webhook
         webhook.add_embed(embed)
         time.sleep(0.5)
+
 elif len(new_following_me_only) == 0:
     # Create embed object for webhook
     embed = DiscordEmbed(title="Users who started following you", description="None today!", color=color_no_change)
     # Add embed object to webhook
     webhook.add_embed(embed)
     time.sleep(0.5)
+
 
 # nolonger_following_them_only
 if len(nolonger_following_them_only) > 0:
@@ -239,6 +250,7 @@ if len(nolonger_following_them_only) > 0:
         # Add embed object to webhook
         webhook.add_embed(embed)
         time.sleep(0.5)
+
 elif len(nolonger_following_them_only) == 0:
     # Create embed object for webhook
     embed = DiscordEmbed(title="Users you stopped following", description="None today!", color=color_no_change)
@@ -254,6 +266,7 @@ if len(new_following_them_only) > 0:
         # Add embed object to webhook
         webhook.add_embed(embed)
         time.sleep(0.5)
+
 elif len(new_following_them_only) == 0:
     # Create embed object for webhook
     embed = DiscordEmbed(title="Users you started following", description="None today!", color=color_no_change)
@@ -283,6 +296,8 @@ profile.followed_count: Number of followings
 profile.post_count: Number of posts
 profile.biography: bio
 profile.is_private: private?
+profile.username: username
+profile.name: display name
 
 x2 of each, length and then string:
  - nolonger_following_me_only
@@ -293,22 +308,27 @@ x2 of each, length and then string:
 
 row_data = []
 row_data.append(str(init_time_with_day))
-row_data.append(str(strprofile.follower_count)) #int
+row_data.append(str(profile.follower_count)) #int
 row_data.append(str(profile.followed_count)) #int
 row_data.append(str(profile.post_count)) #into
 row_data.append(str(profile.biography))
+row_data.append(str(profile.username))
+row_data.append(str(profile.name))
 row_data.append(str(profile.is_private)) #bool
-row_data.append(str(len(sheet_nolonger_following_me_only))) #int
+row_data.append(str(profile.is_verified)) #bool
+row_data.append(str(profile.is_business_account))
+row_data.append(str(length_nolonger_following_me_only)) #int
 row_data.append(str(sheet_nolonger_following_me_only)) #list
-row_data.append(str(len(sheet_new_following_me_only)))
+row_data.append(str(length_new_following_me_only))
 row_data.append(str(sheet_new_following_me_only)) #list
-row_data.append(str(len(sheet_nolonger_following_them_only)))
+row_data.append(str(length_nolonger_following_them_only))
 row_data.append(str(sheet_nolonger_following_them_only)) #list
-row_data.append(str(len(sheet_new_following_them_only)))
+row_data.append(str(length_new_following_them_only))
 row_data.append(str(sheet_new_following_them_only)) #list
 
 
 # Appending to Worksheet
 worksheet.append_row(row_data, value_input_option="USER_ENTERED", insert_data_option="INSERT_ROWS")
 
+print("Sheet Updated")
 
