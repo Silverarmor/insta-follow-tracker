@@ -13,6 +13,17 @@ now = datetime.now()
 init_time = now.strftime("%H:%M:%S")
 init_time_with_day = now.strftime("%Y-%m-%d %H:%M:%S.%f")
 
+# Webhook Config
+webhook = DiscordWebhook(url=discord_webhook_url, avatar_url="https://i.imgur.com/IpIG5TP.png", username="Instagram Statistics Tracker")
+footer_text = "Silverarmor's Instagram tracking of " + scrape_username
+
+embed = DiscordEmbed(title="Initialised", description="Initialised at" + init_time_with_day, color=0xFEFEFE)
+# Add embed object to webhook
+webhook.add_embed(embed)
+# Send Webhook
+response = webhook.execute()
+webhook.remove_embed(0)
+
 # # Uncomment if you want to prompt user for account to scrape. Else will use credentials.py's version
 # scrape_username = input("Enter an Instagram account's username to scrape it's data: ")
 
@@ -199,10 +210,6 @@ nolonger_following_them_only = string_divide(nolonger_following_them_only, split
 
 
 # WEBHOOK SENDING
-
-# Webhook Config
-webhook = DiscordWebhook(url=discord_webhook_url, avatar_url="https://i.imgur.com/IpIG5TP.png", username="Instagram Statistics Tracker")
-footer_text = "Silverarmor's Instagram tracking of " + scrape_username
 
 # # Webhook Data Message
 # VARS
