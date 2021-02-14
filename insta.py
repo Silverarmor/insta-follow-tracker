@@ -19,6 +19,7 @@ init_time_with_day = now.strftime("%Y-%m-%d %H:%M:%S.%f")
 # CREDIT
 # https://medium.com/scrape-instagram-followers/scrape-instagram-followers-with-python-eba64e84048
 
+print("Initialised. Starting login & scrape")
 
 # ! SCRAPING
 
@@ -43,6 +44,7 @@ except SuspisciousLoginAttemptError as error:
         code = input('Enter the security code that was sent to you via SMS: ')
     client.input_security_code(code)
 
+print("Logged in")
 time.sleep(5) # Sleep 5 seconds to not be a bot
 
 # Scrape Instagram followers
@@ -92,6 +94,7 @@ time.sleep(5) # Sleep 5 seconds to chill out
 # Closing the client to prevent memory leaks
 client.disconnect()
 
+print("Scraping complete & client disconnected. Starting data processing...")
 time.sleep(5) # Sleep 5 seconds to chill out
 
 
