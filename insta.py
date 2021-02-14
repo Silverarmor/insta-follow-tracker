@@ -212,9 +212,9 @@ data_bio = "```" + profile.biography + "```"  # placing bio in triple backticks 
 color_data = 0x7289da
 color_nolonger_following_me = 0xFF0000
 color_new_following_me = 0x00FF00
-color_nolonger_following_them = 0xFFFF00
-color_new_following_them = 0xFFA500
-color_no_change = 0xbfff00
+color_nolonger_following_them = 0x0000FF
+color_new_following_them = 0xFF8C00
+color_no_change = 0xFFFFFF
 
 
 # General Data Webhook
