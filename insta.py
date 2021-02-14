@@ -17,7 +17,7 @@ init_time_with_day = now.strftime("%Y-%m-%d %H:%M:%S.%f")
 webhook = DiscordWebhook(url=discord_webhook_url, avatar_url="https://i.imgur.com/IpIG5TP.png", username="Instagram Statistics Tracker")
 footer_text = "Silverarmor's Instagram tracking of " + scrape_username
 
-embed = DiscordEmbed(title="Initialised", description="Initialised at" + init_time_with_day, color=0xFEFEFE)
+embed = DiscordEmbed(title="Initialised", description="Initialised at " + init_time_with_day, color=0xFEFEFE)
 # Add embed object to webhook
 webhook.add_embed(embed)
 # Send Webhook
