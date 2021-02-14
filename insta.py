@@ -16,12 +16,16 @@ init_time_with_day = now.strftime("%Y-%m-%d %H:%M:%S.%f")
 # # Uncomment if you want to prompt user for account to scrape. Else will use credentials.py's version
 # scrape_username = input("Enter an Instagram account's username to scrape it's data: ")
 
+# CREDIT
+# https://medium.com/scrape-instagram-followers/scrape-instagram-followers-with-python-eba64e84048
+
+
 # ! SCRAPING
 
 # Create a instaclient object. Place as driver_path argument the path that leads to where you saved the chromedriver.exe file
 client = InstaClient(driver_path=driver_path, localhost_headless=True)
 
-# Backup where headless is not desired.
+# # Backup where headless is not desired.
 # client = InstaClient(driver_path=driver_path)
 
 try:
@@ -39,6 +43,7 @@ except SuspisciousLoginAttemptError as error:
         code = input('Enter the security code that was sent to you via SMS: ')
     client.input_security_code(code)
 
+
 # Scrape Instagram followers
 try:
     # Try to get the users following the scrape user, as aTuple
@@ -53,6 +58,7 @@ except PrivateAccountError:
     print('{} is a private account'.format(scrape_username))
 except:
     client.disconnect()
+
 
 # Scrape Instagram following
 try:
@@ -69,6 +75,7 @@ except PrivateAccountError:
 except:
     client.disconnect()
 
+
 # Scrape Instagram profile information
 try:
     # Scrape profile into 'profile' object
@@ -76,18 +83,21 @@ try:
 except:
     client.disconnect()
 
+# Closing the client to prevent memory leaks
+client.disconnect()
+
+
+# DATA PROCESSING & READING/SAVING TO FILE
+
 # Processing Data (finding differences)
 following_me_only = list((set(followers) - set(following)))
 following_them_only = list((set(following) - set(followers)))
 
-# Closing the client to prevent memory leaks
-client.disconnect()
-
-# READING FILES & COMPARING WITH NEW STRINGS
 
 # defining empty lists
 old_following_me_only =  []
 old_following_them_only = []
+
 
 # Reading files
 if os.path.exists('following_me_only.txt'):
@@ -102,6 +112,7 @@ if os.path.exists('following_them_only.txt'):
 else:
     print("following_them_only file does not exist, skipping reading...")
 
+
 # Comparing old and current lists
 if os.path.exists('following_me_only.txt') and os.path.exists('following_them_only.txt'):
     new_following_me_only = list(set(following_me_only) - set(old_following_me_only))
@@ -113,9 +124,10 @@ else:
     print("Skipping comparing old and current lists. Loading the lists as full")
     new_following_me_only = following_me_only
     new_following_them_only = following_them_only
-    # Set nolonger vars as empty to prevent errors.
+    # Set nolonger vars as empty lists to prevent errors.
     nolonger_following_me_only = []
     nolonger_following_them_only = []
+
 
 # Overwriting files with new data.
 with open('following_me_only.txt', 'w') as filehandle:
@@ -124,6 +136,7 @@ with open('following_me_only.txt', 'w') as filehandle:
 with open('following_them_only.txt', 'w') as filehandle:
     filehandle.writelines("%s\n" % user for user in following_them_only)
 
+
 # Putting Lengths into variable since I'm lazy.
 length_new_following_me_only = len(new_following_me_only)
 length_nolonger_following_me_only = len(nolonger_following_me_only)
@@ -131,12 +144,13 @@ length_new_following_them_only = len(new_following_them_only)
 length_nolonger_following_them_only = len(nolonger_following_them_only)
 
 
-# Converting into comma separated string for Discord
+# Converting into comma separated string for readability
 """NOTE THIS ALSO CHANGES VARS FROM LIST to STR"""
 new_following_me_only = (', '.join(new_following_me_only))
 nolonger_following_me_only = (', '.join(nolonger_following_me_only))
 new_following_them_only = (', '.join(new_following_them_only))
 nolonger_following_them_only = (', '.join(nolonger_following_them_only))
+
 
 # Creating identicals for gspread use. String format with commas, but underscores NOT escaped.
 sheet_new_following_me_only = new_following_me_only
@@ -144,11 +158,13 @@ sheet_nolonger_following_me_only = nolonger_following_me_only
 sheet_new_following_them_only = new_following_them_only
 sheet_nolonger_following_them_only = nolonger_following_them_only
 
-# Escaping any underscores
+
+# Escaping any underscores - to prevent discord formatting
 new_following_me_only = new_following_me_only.replace("_", "\\_")
 nolonger_following_me_only = nolonger_following_me_only.replace("_", "\\_")
 new_following_them_only = new_following_them_only.replace("_", "\\_")
 nolonger_following_me_only = nolonger_following_me_only.replace("_", "\\_")
+
 
 # Splitting string into 1000 characters per list, since webhooks' embed description are limited to 1024 characters
 # Maxmimum message length? Will split message(s) into this number if required.
@@ -158,6 +174,7 @@ def string_divide(string, div):
        for i in range(0, len(string), div):
            list.append(string[i:i+div])
        return list
+
 
 # How many chars in each string in the list?
 split_length = 1000
@@ -170,6 +187,7 @@ nolonger_following_them_only = string_divide(nolonger_following_them_only, split
 
 
 # WEBHOOK SENDING
+
 # Webhook Config
 webhook = DiscordWebhook(url=discord_webhook_url, avatar_url="https://i.imgur.com/IpIG5TP.png", username="Instagram Statistics Tracker")
 footer_text = "Silverarmor's Instagram tracking of " + scrape_username
@@ -179,6 +197,7 @@ footer_text = "Silverarmor's Instagram tracking of " + scrape_username
 data_description = "**Ran Successfully**\nTracking " + scrape_username
 data_details = "**Name** - " + str(profile.name) + "\n**Private** - " + str(profile.is_private) + "\n**Business Account** - " + str(profile.is_business_account) +  "\n**Posts Count** - " + str(profile.post_count)
 data_summary  = "**Users who stopped following you** - " + str(length_nolonger_following_me_only) + "\n**Users who started following you** - " + str(length_new_following_me_only) + "\n**Users you stopped following** - " + str(length_nolonger_following_them_only) + "\n**Users you started following** - " + str(length_new_following_them_only)
+data_bio = "```" + profile.biography + "```"  # placing bio in triple backticks for code block
 
 # Colours
 color_data = 0x7289da
@@ -197,7 +216,7 @@ embed.set_footer(text="Initialised at " + str(init_time))
 embed.set_thumbnail(url='https://i.imgur.com/IpIG5TP.png')
 
 embed.add_embed_field(name="Basic Data", value="**Followers Count** - " + str(profile.follower_count) + "\n**Following Count** - " + str(profile.followed_count), inline=False)
-embed.add_embed_field(name="Bio", value=profile.biography, inline=False)
+embed.add_embed_field(name="Bio", value=data_bio, inline=False)
 embed.add_embed_field(name="Summary", value=data_summary, inline=False)
 embed.add_embed_field(name="Details", value=data_details, inline=False)
 
@@ -206,6 +225,7 @@ embed.add_embed_field(name="Details", value=data_details, inline=False)
 webhook.add_embed(embed)
 response = webhook.execute()
 webhook.remove_embed(0)
+time.sleep(0.5) # Sleep .5 secs to prevent ratelimiting
 
 
 # nolonger_following_me_only
@@ -215,14 +235,20 @@ if len(nolonger_following_me_only) > 0:
         embed = DiscordEmbed(title="Users who stopped following you :angry:", description=msg, color=color_nolonger_following_me)
         # Add embed object to webhook
         webhook.add_embed(embed)
-        time.sleep(0.5)
+        # Send Webhook
+        response = webhook.execute()
+        webhook.remove_embed(0)
+        time.sleep(0.5) # Sleep .5 secs to prevent ratelimiting
 
 elif len(nolonger_following_me_only) == 0:
     # Create embed object for webhook
     embed = DiscordEmbed(title="Users who stopped following you :angry:", description="None today!", color=color_no_change)
     # Add embed object to webhook
     webhook.add_embed(embed)
-    time.sleep(0.5)
+    # Send Webhook
+    response = webhook.execute()
+    webhook.remove_embed(0)
+    time.sleep(0.5) # Sleep .5 secs to prevent ratelimiting
 
 
 # new_following_me_only
@@ -232,14 +258,20 @@ if len(new_following_me_only) > 0:
         embed = DiscordEmbed(title="Users who started following you", description=msg, color=color_new_following_me)
         # Add embed object to webhook
         webhook.add_embed(embed)
-        time.sleep(0.5)
+        # Send Webhook
+        response = webhook.execute()
+        webhook.remove_embed(0)
+        time.sleep(0.5) # Sleep .5 secs to prevent ratelimiting
 
 elif len(new_following_me_only) == 0:
     # Create embed object for webhook
     embed = DiscordEmbed(title="Users who started following you", description="None today!", color=color_no_change)
     # Add embed object to webhook
     webhook.add_embed(embed)
-    time.sleep(0.5)
+    # Send Webhook
+    response = webhook.execute()
+    webhook.remove_embed(0)
+    time.sleep(0.5) # Sleep .5 secs to prevent ratelimiting
 
 
 # nolonger_following_them_only
@@ -249,14 +281,21 @@ if len(nolonger_following_them_only) > 0:
         embed = DiscordEmbed(title="Users you stopped following", description=msg, color=color_nolonger_following_them)
         # Add embed object to webhook
         webhook.add_embed(embed)
-        time.sleep(0.5)
+        # Send Webhook
+        response = webhook.execute()
+        webhook.remove_embed(0)
+        time.sleep(0.5) # Sleep .5 secs to prevent ratelimiting
 
 elif len(nolonger_following_them_only) == 0:
     # Create embed object for webhook
     embed = DiscordEmbed(title="Users you stopped following", description="None today!", color=color_no_change)
     # Add embed object to webhook
     webhook.add_embed(embed)
-    time.sleep(0.5)
+    # Send Webhook
+    response = webhook.execute()
+    webhook.remove_embed(0)
+    time.sleep(0.5) # Sleep .5 secs to prevent ratelimiting
+
 
 # new_following_them_only
 if len(new_following_them_only) > 0:
@@ -265,17 +304,20 @@ if len(new_following_them_only) > 0:
         embed = DiscordEmbed(title="Users you started following", description=msg, color=color_new_following_them)
         # Add embed object to webhook
         webhook.add_embed(embed)
-        time.sleep(0.5)
+        # Send Webhook
+        response = webhook.execute()
+        webhook.remove_embed(0)
+        time.sleep(0.5) # Sleep .5 secs to prevent ratelimiting
 
 elif len(new_following_them_only) == 0:
     # Create embed object for webhook
     embed = DiscordEmbed(title="Users you started following", description="None today!", color=color_no_change)
     # Add embed object to webhook
     webhook.add_embed(embed)
-    time.sleep(0.5)
-
-# Send webhook with all created embeds
-response = webhook.execute()
+    # Send Webhook
+    response = webhook.execute()
+    webhook.remove_embed(0)
+    time.sleep(0.5) # Sleep .5 secs to prevent ratelimiting
 
 print("Webhooks Completed")
 
@@ -326,10 +368,10 @@ row_data.append(str(length_nolonger_following_them_only))
 row_data.append(str(sheet_nolonger_following_them_only)) #list
 row_data.append(str(length_new_following_them_only))
 row_data.append(str(sheet_new_following_them_only)) #list
-
+row_data.append(str(following))
+row_data.append(str(followers))
 
 # Appending to Worksheet
 worksheet.append_row(row_data, value_input_option="USER_ENTERED", insert_data_option="INSERT_ROWS")
 
 print("Sheet Updated")
-
