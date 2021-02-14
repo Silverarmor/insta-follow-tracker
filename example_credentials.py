@@ -1,7 +1,14 @@
+# Main Account to scrape
+scrape_username = "nasa"
+
+# Bot Account credentials - ENSURE BOT FOLLOWS MAIN ACC IF MAIN ACC IS PRIVATE
 username = "instagram"
 password = "password"
-discord_webhook = "https://discord.com/api/webhooks/..."
-scrape_username = "nasa"
+
+# Chromedriver driver_path
 driver_path = "'G:\Example\chromedriver.exe'"
+
+# Webhook & Google Sheets
+discord_webhook = "https://discord.com/api/webhooks/..."
 service_account_path = "G:\Example\service_account.json"
 sheet_key = "ABCABC"

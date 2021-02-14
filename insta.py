@@ -43,6 +43,7 @@ except SuspisciousLoginAttemptError as error:
         code = input('Enter the security code that was sent to you via SMS: ')
     client.input_security_code(code)
 
+time.sleep(5) # Sleep 5 seconds to not be a bot
 
 # Scrape Instagram followers
 try:
@@ -59,6 +60,7 @@ except PrivateAccountError:
 except:
     client.disconnect()
 
+time.sleep(15) # Sleep 15 seconds to chill out
 
 # Scrape Instagram following
 try:
@@ -75,6 +77,7 @@ except PrivateAccountError:
 except:
     client.disconnect()
 
+time.sleep(30) # Sleep 30 seconds to chill out
 
 # Scrape Instagram profile information
 try:
@@ -82,12 +85,18 @@ try:
     profile = client.get_profile(scrape_username)
 except:
     client.disconnect()
+    print("COULD NOT GET PROFILE INFORMATION")
+
+time.sleep(5) # Sleep 5 seconds to chill out
 
 # Closing the client to prevent memory leaks
 client.disconnect()
 
+time.sleep(5) # Sleep 5 seconds to chill out
+
 
 # DATA PROCESSING & READING/SAVING TO FILE
+
 
 # Processing Data (finding differences)
 following_me_only = list((set(followers) - set(following)))
