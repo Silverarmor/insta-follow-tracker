@@ -3,9 +3,12 @@ CLIENT_SECRET.*
 credentials.*
 service_account.*
 
-# Following Text Files
+# Instagram Specific Text Files
 following_me_only.txt
 following_them_only.txt
+followers.txt
+following.txt
+
 
 # Sensitive Data
 tools/*
