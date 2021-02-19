@@ -109,73 +109,82 @@ print("Scraping complete & client disconnected. Starting data processing...")
 
 # DATA PROCESSING & READING/SAVING TO FILE
 
+
+# Processing Data (finding differences)
+following_me_only = list((set(followers) - set(following)))
+following_them_only = list((set(following) - set(followers)))
+
+
+# defining empty lists
+old_following_me_only =  []
+old_following_them_only = []
+
+
 # Reading files
-if os.path.exists('followers.txt'):
-    with open('followers.txt', 'r') as filehandle:
-        old_followers = [current_place.rstrip() for current_place in filehandle.readlines()]
+if os.path.exists('following_me_only.txt'):
+    with open('following_me_only.txt', 'r') as filehandle:
+        old_following_me_only = [current_place.rstrip() for current_place in filehandle.readlines()]
 else:
-    print("followers file does not exist, skipping reading...")
+    print("following_me_only file does not exist, skipping reading...")
     
-if os.path.exists('following.txt'):
-    with open('following.txt', 'r') as filehandle:
-        old_following = [current_place.rstrip() for current_place in filehandle.readlines()]
+if os.path.exists('following_them_only.txt'):
+    with open('following_them_only.txt', 'r') as filehandle:
+        old_following_them_only = [current_place.rstrip() for current_place in filehandle.readlines()]
 else:
-    print("following file does not exist, skipping reading...")
+    print("following_them_only file does not exist, skipping reading...")
 
 
 # Comparing old and current lists
-if os.path.exists('followers.txt') and os.path.exists('following.txt'):
-    new_followers = list(set(followers) - set(old_followers))
-    nolonger_followers = list(set(old_followers) - set(followers))
-    new_following = list(set(following) - set(old_following))
-    nolonger_following = list(set(old_following) - set(following))
-    
+if os.path.exists('following_me_only.txt') and os.path.exists('following_them_only.txt'):
+    new_following_me_only = list(set(following_me_only) - set(old_following_me_only))
+    nolonger_following_me_only = list(set(old_following_me_only) - set(following_me_only))
+    new_following_them_only = list(set(following_them_only) - set(old_following_them_only))
+    nolonger_following_them_only = list(set(old_following_them_only) - set(following_them_only))
+
 else:
     print("Skipping comparing old and current lists. Loading the lists as full")
-    new_followers = followers
-    new_following = following
+    new_following_me_only = following_me_only
+    new_following_them_only = following_them_only
     # Set nolonger vars as empty lists to prevent errors.
-    nolonger_followers = []
-    nolonger_following = []
+    nolonger_following_me_only = []
+    nolonger_following_them_only = []
 
 
 # Overwriting files with new data.
-with open('followers.txt', 'w') as filehandle:
-    filehandle.writelines("%s\n" % user for user in followers)
+with open('following_me_only.txt', 'w') as filehandle:
+    filehandle.writelines("%s\n" % user for user in following_me_only)
 
-with open('following.txt', 'w') as filehandle:
-    filehandle.writelines("%s\n" % user for user in following)
+with open('following_them_only.txt', 'w') as filehandle:
+    filehandle.writelines("%s\n" % user for user in following_them_only)
 
 
 # Putting Lengths into variable since I'm lazy.
-length_new_followers = len(new_followers)
-length_nolonger_followers = len(nolonger_followers)
-length_new_following = len(new_following)
-length_nolonger_following = len(nolonger_following)
+length_new_following_me_only = len(new_following_me_only)
+length_nolonger_following_me_only = len(nolonger_following_me_only)
+length_new_following_them_only = len(new_following_them_only)
+length_nolonger_following_them_only = len(nolonger_following_them_only)
 
 
 # Converting into comma separated string for readability
 """NOTE THIS ALSO CHANGES VARS FROM LIST to STR"""
-new_followers = (', '.join(new_followers))
-nolonger_followers = (', '.join(nolonger_followers))
-new_following = (', '.join(new_following))
-nolonger_following = (', '.join(nolonger_following))
-followers_as_string = (', '.join(followers))
-following_as_string = (', '.join(following))
+new_following_me_only = (', '.join(new_following_me_only))
+nolonger_following_me_only = (', '.join(nolonger_following_me_only))
+new_following_them_only = (', '.join(new_following_them_only))
+nolonger_following_them_only = (', '.join(nolonger_following_them_only))
 
 
 # Creating identicals for gspread use. String format with commas, but underscores NOT escaped.
-sheet_new_followers = new_followers
-sheet_nolonger_followers = nolonger_followers
-sheet_new_following = new_following
-sheet_nolonger_following = nolonger_following
+sheet_new_following_me_only = new_following_me_only
+sheet_nolonger_following_me_only = nolonger_following_me_only
+sheet_new_following_them_only = new_following_them_only
+sheet_nolonger_following_them_only = nolonger_following_them_only
 
 
 # Escaping any underscores - to prevent discord formatting
-new_followers = new_followers.replace("_", "\\_")
-nolonger_followers = nolonger_followers.replace("_", "\\_")
-new_following = new_following.replace("_", "\\_")
-nolonger_following = nolonger_following.replace("_", "\\_")
+new_following_me_only = new_following_me_only.replace("_", "\\_")
+nolonger_following_me_only = nolonger_following_me_only.replace("_", "\\_")
+new_following_them_only = new_following_them_only.replace("_", "\\_")
+nolonger_following_me_only = nolonger_following_me_only.replace("_", "\\_")
 
 
 # Splitting string into 1000 characters per list, since webhooks' embed description are limited to 1024 characters
@@ -192,10 +201,10 @@ def string_divide(string, div):
 split_length = 1000
 
 # Splitting
-new_followers = string_divide(new_followers, split_length)
-nolonger_followers = string_divide(nolonger_followers, split_length)
-new_following = string_divide(new_following, split_length)
-nolonger_following = string_divide(nolonger_following, split_length)
+new_following_me_only = string_divide(new_following_me_only, split_length)
+nolonger_following_me_only = string_divide(nolonger_following_me_only, split_length)
+new_following_them_only = string_divide(new_following_them_only, split_length)
+nolonger_following_them_only = string_divide(nolonger_following_them_only, split_length)
 
 
 # WEBHOOK SENDING
@@ -204,15 +213,15 @@ nolonger_following = string_divide(nolonger_following, split_length)
 # VARS
 data_description = "**Ran Successfully**\nTracking " + scrape_username
 data_details = "**Name** - " + str(profile.name) + "\n**Private** - " + str(profile.is_private) + "\n**Business Account** - " + str(profile.is_business_account) +  "\n**Posts Count** - " + str(profile.post_count)
-data_summary  = "**Users who started following you** - " + str(length_new_followers) + "\n**Users who stopped following you** - " + str(length_nolonger_followers) + "\n**Users you started following** - " + str(length_new_following) + "\n**Users you stopped following** - " + str(length_nolonger_following)
+data_summary  = "**Users who stopped following you** - " + str(length_nolonger_following_me_only) + "\n**Users who started following you** - " + str(length_new_following_me_only) + "\n**Users you stopped following** - " + str(length_nolonger_following_them_only) + "\n**Users you started following** - " + str(length_new_following_them_only)
 data_bio = "```" + profile.biography + "```"  # placing bio in triple backticks for code block
 
 # Colours
 color_data = 0x7289da
-color_nolonger_followers = 0xFF0000
-color_new_followers = 0x00FF00
-color_nolonger_following = 0x0000FF
-color_new_following = 0xFF8C00
+color_nolonger_following_me = 0xFF0000
+color_new_following_me = 0x00FF00
+color_nolonger_following_them = 0x0000FF
+color_new_following_them = 0xFF8C00
 color_no_change = 0xFFFFFF
 
 
@@ -236,11 +245,11 @@ webhook.remove_embed(0)
 time.sleep(0.5) # Sleep .5 secs to prevent ratelimiting
 
 
-# nolonger_followers
-if len(nolonger_followers) > 0:
-    for msg in nolonger_followers:
+# nolonger_following_me_only
+if len(nolonger_following_me_only) > 0:
+    for msg in nolonger_following_me_only:
         # Create embed object for webhook
-        embed = DiscordEmbed(title="Users who stopped following you :angry:", description=msg, color=color_nolonger_followers)
+        embed = DiscordEmbed(title="Users who stopped following you :angry:", description=msg, color=color_nolonger_following_me)
         # Add embed object to webhook
         webhook.add_embed(embed)
         # Send Webhook
@@ -248,9 +257,9 @@ if len(nolonger_followers) > 0:
         webhook.remove_embed(0)
         time.sleep(0.5) # Sleep .5 secs to prevent ratelimiting
 
-elif len(nolonger_followers) == 0:
+elif len(nolonger_following_me_only) == 0:
     # Create embed object for webhook
-    embed = DiscordEmbed(title="Users who stopped following you", description="None today!", color=color_no_change)
+    embed = DiscordEmbed(title="Users who stopped following you :angry:", description="None today!", color=color_no_change)
     # Add embed object to webhook
     webhook.add_embed(embed)
     # Send Webhook
@@ -259,11 +268,11 @@ elif len(nolonger_followers) == 0:
     time.sleep(0.5) # Sleep .5 secs to prevent ratelimiting
 
 
-# new_followers
-if len(new_followers) > 0:
-    for msg in new_followers:
+# new_following_me_only
+if len(new_following_me_only) > 0:
+    for msg in new_following_me_only:
         # Create embed object for webhook
-        embed = DiscordEmbed(title="Users who started following you", description=msg, color=color_new_followers)
+        embed = DiscordEmbed(title="Users who started following you", description=msg, color=color_new_following_me)
         # Add embed object to webhook
         webhook.add_embed(embed)
         # Send Webhook
@@ -271,7 +280,7 @@ if len(new_followers) > 0:
         webhook.remove_embed(0)
         time.sleep(0.5) # Sleep .5 secs to prevent ratelimiting
 
-elif len(new_followers) == 0:
+elif len(new_following_me_only) == 0:
     # Create embed object for webhook
     embed = DiscordEmbed(title="Users who started following you", description="None today!", color=color_no_change)
     # Add embed object to webhook
@@ -282,11 +291,11 @@ elif len(new_followers) == 0:
     time.sleep(0.5) # Sleep .5 secs to prevent ratelimiting
 
 
-# nolonger_following
-if len(nolonger_following) > 0:
-    for msg in nolonger_following:
+# nolonger_following_them_only
+if len(nolonger_following_them_only) > 0:
+    for msg in nolonger_following_them_only:
         # Create embed object for webhook
-        embed = DiscordEmbed(title="Users you stopped following", description=msg, color=color_nolonger_following)
+        embed = DiscordEmbed(title="Users you stopped following", description=msg, color=color_nolonger_following_them)
         # Add embed object to webhook
         webhook.add_embed(embed)
         # Send Webhook
@@ -294,7 +303,7 @@ if len(nolonger_following) > 0:
         webhook.remove_embed(0)
         time.sleep(0.5) # Sleep .5 secs to prevent ratelimiting
 
-elif len(nolonger_following) == 0:
+elif len(nolonger_following_them_only) == 0:
     # Create embed object for webhook
     embed = DiscordEmbed(title="Users you stopped following", description="None today!", color=color_no_change)
     # Add embed object to webhook
@@ -305,11 +314,11 @@ elif len(nolonger_following) == 0:
     time.sleep(0.5) # Sleep .5 secs to prevent ratelimiting
 
 
-# new_following
-if len(new_following) > 0:
-    for msg in new_following:
+# new_following_them_only
+if len(new_following_them_only) > 0:
+    for msg in new_following_them_only:
         # Create embed object for webhook
-        embed = DiscordEmbed(title="Users you started following", description=msg, color=color_new_following)
+        embed = DiscordEmbed(title="Users you started following", description=msg, color=color_new_following_them)
         # Add embed object to webhook
         webhook.add_embed(embed)
         # Send Webhook
@@ -317,7 +326,7 @@ if len(new_following) > 0:
         webhook.remove_embed(0)
         time.sleep(0.5) # Sleep .5 secs to prevent ratelimiting
 
-elif len(new_following) == 0:
+elif len(new_following_them_only) == 0:
     # Create embed object for webhook
     embed = DiscordEmbed(title="Users you started following", description="None today!", color=color_no_change)
     # Add embed object to webhook
@@ -351,36 +360,33 @@ profile.username: username
 profile.name: display name
 
 x2 of each, length and then string:
-    nolonger_followers
-    new_followers
-    nolonger_following
-    new_following
-
-followers_as_string
-following_as_string
+ - nolonger_following_me_only
+ - new_following_me_only
+ - nolonger_following_them_only
+ - new_following_them_only
 """
 
 row_data = []
 row_data.append(str(init_time_with_day))
 row_data.append(str(profile.follower_count)) #int
 row_data.append(str(profile.followed_count)) #int
-row_data.append(str(profile.post_count)) #int
+row_data.append(str(profile.post_count)) #into
 row_data.append(str(profile.biography))
 row_data.append(str(profile.username))
 row_data.append(str(profile.name))
 row_data.append(str(profile.is_private)) #bool
 row_data.append(str(profile.is_verified)) #bool
 row_data.append(str(profile.is_business_account))
-row_data.append(str(length_nolonger_followers)) #int
-row_data.append(str(sheet_nolonger_followers)) #list
-row_data.append(str(length_new_followers))
-row_data.append(str(sheet_new_followers)) #list
-row_data.append(str(length_nolonger_following))
-row_data.append(str(sheet_nolonger_following)) #list
-row_data.append(str(length_new_following))
-row_data.append(str(sheet_new_following)) #list
-row_data.append(str(followers_as_string))
-row_data.append(str(following_as_string))
+row_data.append(str(length_nolonger_following_me_only)) #int
+row_data.append(str(sheet_nolonger_following_me_only)) #list
+row_data.append(str(length_new_following_me_only))
+row_data.append(str(sheet_new_following_me_only)) #list
+row_data.append(str(length_nolonger_following_them_only))
+row_data.append(str(sheet_nolonger_following_them_only)) #list
+row_data.append(str(length_new_following_them_only))
+row_data.append(str(sheet_new_following_them_only)) #list
+row_data.append(str(following))
+row_data.append(str(followers))
 
 # Appending to Worksheet
 worksheet.append_row(row_data, value_input_option="USER_ENTERED", insert_data_option="INSERT_ROWS")
