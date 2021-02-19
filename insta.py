@@ -7,17 +7,23 @@ from discord_webhook import DiscordWebhook, DiscordEmbed
 import time
 import gspread
 
+"""REMEMBER TO UPDATE ME"""
+version = "v1.1.1"
+
 
 # Initialise Time
 now = datetime.now()
 init_time = now.strftime("%H:%M:%S")
-init_time_with_day = now.strftime("%Y-%m-%d %H:%M:%S.%f")
+init_time_with_day = now.strftime("%Y-%m-%d %H:%M:%S")
 
 # Webhook Config
 webhook = DiscordWebhook(url=discord_webhook_url, avatar_url="https://i.imgur.com/IpIG5TP.png", username="Instagram Statistics Tracker")
 footer_text = "Silverarmor's Instagram tracking of " + scrape_username
 
 embed = DiscordEmbed(title="Initialised", description="Initialised at " + init_time_with_day, color=0xFEFEFE)
+embed.set_footer(text=version)
+embed.add_embed_field(name="Tracking ", value=scrape_username, inline=False)
+
 # Add embed object to webhook
 webhook.add_embed(embed)
 # Send Webhook
