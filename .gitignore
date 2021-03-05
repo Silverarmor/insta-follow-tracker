@@ -8,7 +8,10 @@ following_me_only.txt
 following_them_only.txt
 followers.txt
 following.txt
+*_error.txt
+error.txt
 
+testing.py
 
 # Sensitive Data
 tools/*

@@ -2,13 +2,15 @@ from instaclient import InstaClient
 from instaclient.errors import *
 from credentials import *
 import os
+from os import path
 from datetime import datetime
 from discord_webhook import DiscordWebhook, DiscordEmbed
 import time
 import gspread
+import sys
 
 """REMEMBER TO UPDATE ME"""
-version = "v1.1.1"
+version = "v1.2.1"
 
 
 # Initialise Time
@@ -18,16 +20,12 @@ init_time_with_day = now.strftime("%Y-%m-%d %H:%M:%S")
 
 # Webhook Config
 webhook = DiscordWebhook(url=discord_webhook_url, avatar_url="https://i.imgur.com/IpIG5TP.png", username="Instagram Statistics Tracker")
-footer_text = "Silverarmor's Instagram tracking of " + scrape_username
 
 embed = DiscordEmbed(title="Initialised", description="Initialised at " + init_time_with_day, color=0xFEFEFE)
 embed.set_footer(text=version)
 embed.add_embed_field(name="Tracking ", value=scrape_username, inline=False)
-
-# Add embed object to webhook
-webhook.add_embed(embed)
-# Send Webhook
-response = webhook.execute()
+webhook.add_embed(embed) # Add embed object to webhook
+response = webhook.execute() # Send Webhook
 webhook.remove_embed(0)
 
 # # Uncomment if you want to prompt user for account to scrape. Else will use credentials.py's version
@@ -135,7 +133,43 @@ if os.path.exists('followers.txt') and os.path.exists('following.txt'):
     nolonger_followers = list(set(old_followers) - set(followers))
     new_following = list(set(following) - set(old_following))
     nolonger_following = list(set(old_following) - set(following))
-    
+
+    # TEST THAT SCRAPE IS VALID
+    limit = 30
+
+    if len(new_followers) >= limit or len(nolonger_followers) >= limit or len(new_following) >= limit or len(nolonger_following) >= limit or profile.name == None:
+        # Send Error Webhook
+        embed = DiscordEmbed(title="Error", description="Encountered an error", color=0xFF0000)
+        data_summary = "**Users who started following you** - " + str(len(new_followers)) + "\n**Users who stopped following you** - " + str(len(nolonger_followers)) + "\n**Users you started following** - " + str(len(new_following)) + "\n**Users you stopped following** - " + str(len(nolonger_following))
+        embed.add_embed_field(name="Summary", value=data_summary, inline=False)
+        webhook.add_embed(embed) # Add embed object to webhook
+        response = webhook.execute() # Send Webhook
+        webhook.remove_embed(0)
+
+        # Write Error data to files. (NOTE IT OVERWRITES)
+        with open('followers_error.txt', 'w') as filehandle:
+           filehandle.writelines("%s\n" % user for user in followers)
+        with open('following_error.txt', 'w') as filehandle:
+          filehandle.writelines("%s\n" % user for user in following)
+        with open('new_followers_error.txt', 'w') as filehandle:
+          filehandle.writelines("%s\n" % user for user in new_followers)
+        with open('nolonger_followers__error.txt', 'w') as filehandle:
+          filehandle.writelines("%s\n" % user for user in nolonger_followers)
+        with open('new_following_error.txt', 'w') as filehandle:
+          filehandle.writelines("%s\n" % user for user in new_following)
+        with open('nolonger_following_error.txt', 'w') as filehandle:
+          filehandle.writelines("%s\n" % user for user in nolonger_following)
+
+        if path.exists("ERROR.txt"):
+            sys.exit()
+
+        f = open('ERROR.txt', 'w')
+        f.write("ERROR")
+        f.close()
+
+        # Restarts the script.
+        os.execv(sys.executable, ['python3.9'] + sys.argv)
+
 else:
     print("Skipping comparing old and current lists. Loading the lists as full")
     new_followers = followers
