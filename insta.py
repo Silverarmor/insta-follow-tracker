@@ -65,7 +65,7 @@ time.sleep(5) # Sleep 5 seconds to not be a bot
 # Scrape Instagram followers
 try:
     # Try to get the users following the scrape user, as aTuple
-    followers = client.get_followers(user=scrape_username, count=None, use_api=False, callback_frequency=100)
+    followers = client.get_followers(user=scrape_username, count=None, use_api=True, callback_frequency=100)
     # Changing from Tuple to List (Taking only the first item in Tuple)
     followers = followers[0]
 except InvalidUserError:
@@ -82,7 +82,7 @@ time.sleep(5) # Sleep 5 seconds to chill out
 # Scrape Instagram following
 try:
     # Try to get the users following the scrape user, as a Tuple
-    following = client.get_following(user=scrape_username, count=None, use_api=False, callback_frequency=100)
+    following = client.get_following(user=scrape_username, count=None, use_api=True, callback_frequency=100)
     # Changing from Tuple to List (Taking only the first item in Tuple)
     following = following[0]
 except InvalidUserError:
