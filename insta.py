@@ -10,7 +10,7 @@ import gspread
 import sys
 
 """REMEMBER TO UPDATE ME"""
-version = "v1.2.1"
+version = "v1.3.0"
 
 
 # Initialise Time
@@ -64,10 +64,12 @@ time.sleep(5) # Sleep 5 seconds to not be a bot
 
 # Scrape Instagram followers
 try:
-    # Try to get the users following the scrape user, as aTuple
-    followers = client.get_followers(user=scrape_username, count=None, use_api=True, callback_frequency=100)
+    # Try to get the users following the scrape user, as a Tuple
+    followers_scrape = client.get_followers(user=scrape_username, count=None, use_api=True, callback_frequency=100)
     # Changing from Tuple to List (Taking only the first item in Tuple)
-    followers = followers[0]
+    followers_scrape = followers_scrape[0]
+    followers = list(map(str, followers_scrape))
+    del followers_scrape
 except InvalidUserError:
     # Exception raised if the username is not valid
     print('The username is not valid')
@@ -82,9 +84,12 @@ time.sleep(5) # Sleep 5 seconds to chill out
 # Scrape Instagram following
 try:
     # Try to get the users following the scrape user, as a Tuple
-    following = client.get_following(user=scrape_username, count=None, use_api=True, callback_frequency=100)
+    following_scrape = client.get_following(user=scrape_username, count=None, use_api=True, callback_frequency=100)
     # Changing from Tuple to List (Taking only the first item in Tuple)
-    following = following[0]
+    following_scrape = following_scrape[0]
+    following = list(map(str, following_scrape))
+    # following = [str(a) for a in following_scrape]
+    del following_scrape
 except InvalidUserError:
     # Exception raised if the username is not valid
     print('The username is not valid')
@@ -119,12 +124,14 @@ if os.path.exists('followers.txt'):
         old_followers = [current_place.rstrip() for current_place in filehandle.readlines()]
 else:
     print("followers file does not exist, skipping reading...")
+    terminate_early = True
     
 if os.path.exists('following.txt'):
     with open('following.txt', 'r') as filehandle:
         old_following = [current_place.rstrip() for current_place in filehandle.readlines()]
 else:
     print("following file does not exist, skipping reading...")
+    terminate_early = True
 
 
 # Comparing old and current lists
@@ -134,41 +141,41 @@ if os.path.exists('followers.txt') and os.path.exists('following.txt'):
     new_following = list(set(following) - set(old_following))
     nolonger_following = list(set(old_following) - set(following))
 
-    # TEST THAT SCRAPE IS VALID
-    limit = 30
+    # # TEST THAT SCRAPE IS VALID
+    # limit = 30
 
-    if len(new_followers) >= limit or len(nolonger_followers) >= limit or len(new_following) >= limit or len(nolonger_following) >= limit or profile.name == None:
-        # Send Error Webhook
-        embed = DiscordEmbed(title="Error", description="Encountered an error", color=0xFF0000)
-        data_summary = "**Users who started following you** - " + str(len(new_followers)) + "\n**Users who stopped following you** - " + str(len(nolonger_followers)) + "\n**Users you started following** - " + str(len(new_following)) + "\n**Users you stopped following** - " + str(len(nolonger_following))
-        embed.add_embed_field(name="Summary", value=data_summary, inline=False)
-        webhook.add_embed(embed) # Add embed object to webhook
-        response = webhook.execute() # Send Webhook
-        webhook.remove_embed(0)
+    # if len(new_followers) >= limit or len(nolonger_followers) >= limit or len(new_following) >= limit or len(nolonger_following) >= limit or profile.name == None:
+    #     # Send Error Webhook
+    #     embed = DiscordEmbed(title="Error", description="Encountered an error", color=0xFF0000)
+    #     data_summary = "**Users who started following you** - " + str(len(new_followers)) + "\n**Users who stopped following you** - " + str(len(nolonger_followers)) + "\n**Users you started following** - " + str(len(new_following)) + "\n**Users you stopped following** - " + str(len(nolonger_following))
+    #     embed.add_embed_field(name="Summary", value=data_summary, inline=False)
+    #     webhook.add_embed(embed) # Add embed object to webhook
+    #     response = webhook.execute() # Send Webhook
+    #     webhook.remove_embed(0)
 
-        # Write Error data to files. (NOTE IT OVERWRITES)
-        with open('followers_error.txt', 'w') as filehandle:
-           filehandle.writelines("%s\n" % user for user in followers)
-        with open('following_error.txt', 'w') as filehandle:
-          filehandle.writelines("%s\n" % user for user in following)
-        with open('new_followers_error.txt', 'w') as filehandle:
-          filehandle.writelines("%s\n" % user for user in new_followers)
-        with open('nolonger_followers__error.txt', 'w') as filehandle:
-          filehandle.writelines("%s\n" % user for user in nolonger_followers)
-        with open('new_following_error.txt', 'w') as filehandle:
-          filehandle.writelines("%s\n" % user for user in new_following)
-        with open('nolonger_following_error.txt', 'w') as filehandle:
-          filehandle.writelines("%s\n" % user for user in nolonger_following)
+    #     # Write Error data to files. (NOTE IT OVERWRITES)
+    #     with open('followers_error.txt', 'w') as filehandle:
+    #        filehandle.writelines("%s\n" % user for user in followers)
+    #     with open('following_error.txt', 'w') as filehandle:
+    #       filehandle.writelines("%s\n" % user for user in following)
+    #     with open('new_followers_error.txt', 'w') as filehandle:
+    #       filehandle.writelines("%s\n" % user for user in new_followers)
+    #     with open('nolonger_followers__error.txt', 'w') as filehandle:
+    #       filehandle.writelines("%s\n" % user for user in nolonger_followers)
+    #     with open('new_following_error.txt', 'w') as filehandle:
+    #       filehandle.writelines("%s\n" % user for user in new_following)
+    #     with open('nolonger_following_error.txt', 'w') as filehandle:
+    #       filehandle.writelines("%s\n" % user for user in nolonger_following)
 
-        if path.exists("ERROR.txt"):
-            sys.exit()
+    #     if path.exists("ERROR.txt"):
+    #         sys.exit()
 
-        f = open('ERROR.txt', 'w')
-        f.write("ERROR")
-        f.close()
+    #     f = open('ERROR.txt', 'w')
+    #     f.write("ERROR")
+    #     f.close()
 
-        # Restarts the script.
-        os.execv(sys.executable, ['python3.9'] + sys.argv)
+    #     # Restarts the script.
+    #     os.execv(sys.executable, ['python3.9'] + sys.argv)
 
 else:
     print("Skipping comparing old and current lists. Loading the lists as full")
@@ -186,6 +193,16 @@ with open('followers.txt', 'w') as filehandle:
 with open('following.txt', 'w') as filehandle:
     filehandle.writelines("%s\n" % user for user in following)
 
+if terminate_early == True:
+    sys.exit("Terminated Early since followers/following file was empty")
+
+# Removing unnecesary text for user readability. "Profile<abc.def>" to "abc.def"
+new_followers = [a[8:-1] for a in new_followers]
+new_following = [a[8:-1] for a in new_following]
+nolonger_followers = [a[8:-1] for a in nolonger_followers]
+nolonger_following = [a[8:-1] for a in nolonger_following]
+followers = [a[8:-1] for a in followers]
+following = [a[8:-1] for a in following]
 
 # Putting Lengths into variable since I'm lazy.
 length_new_followers = len(new_followers)
