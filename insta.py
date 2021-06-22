@@ -10,7 +10,7 @@ import gspread
 import sys
 
 """REMEMBER TO UPDATE ME"""
-version = "v1.3.0"
+version = "v1.3.1"
 
 
 # Initialise Time
