@@ -118,6 +118,9 @@ print("Scraping complete & client disconnected. Starting data processing...")
 
 # DATA PROCESSING & READING/SAVING TO FILE
 
+# by default, program should not terminate early
+terminate_early = False
+
 # Reading files
 if os.path.exists('followers.txt'):
     with open('followers.txt', 'r') as filehandle:
