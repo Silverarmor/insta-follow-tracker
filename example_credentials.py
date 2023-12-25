@@ -9,6 +9,6 @@ password = "password"
 driver_path = "'G:\Example\chromedriver.exe'"
 
 # Webhook & Google Sheets
-discord_webhook = "https://discord.com/api/webhooks/..."
+discord_webhook_url = "https://discord.com/api/webhooks/..."
 service_account_path = "G:\Example\service_account.json"
 sheet_key = "ABCABC"
