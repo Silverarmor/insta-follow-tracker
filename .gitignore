@@ -2,6 +2,7 @@
 CLIENT_SECRET.*
 credentials.*
 service_account.*
+session.json
 
 # Instagram Specific Text Files
 following_me_only.txt
