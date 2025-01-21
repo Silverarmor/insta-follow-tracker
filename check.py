@@ -1,11 +1,18 @@
 from instagrapi import Client
-from instagrapi.exceptions import LoginRequired
+from instagrapi.exceptions import LoginRequired, UserNotFound
 from credentials import *
 import json
 from datetime import datetime, timedelta 
 import os
 import gspread
 
+def get_username(user_id):
+    """returns username from user_id, with error handling"""
+    try:
+        name = cl.user_info(user_id).username
+    except UserNotFound as e:
+        name = str(user_id) + " err"
+    return name
 
 
 def login_user():
@@ -104,11 +111,11 @@ def read_data(read_date):
 
 
 def get_dates():
-    global today_date, yesterday_date
+    global timeday, today_date, yesterday_date
 
     now = datetime.now()
     # init_time = now.strftime("%H:%M:%S") # Date in format HH:MM:SS
-    # init_time_with_day = now.strftime("%Y-%m-%d %H:%M:%S") # Date in format YYYY-MM-DD HH:MM:SS
+    timeday = now.strftime("%Y-%m-%d %H:%M:%S") # Date in format YYYY-MM-DD HH:MM:SS
     today_date = now.strftime("%Y-%m-%d") # Date in format YYYY-MM-DD
     yesterday_date = (now - timedelta(days=1)).strftime("%Y-%m-%d") # Date in format YYYY-MM-DD
 
@@ -124,10 +131,11 @@ def compare_data(cl, followers, following):
     nolonger_following = list(set(old_following) - set(following))
 
     # For change list, get the usernames
-    new_followers = [cl.user_info(user_id).username for user_id in new_followers]
-    nolonger_followers = [cl.user_info(user_id).username for user_id in nolonger_followers]
-    new_following = [cl.user_info(user_id).username for user_id in new_following]
-    nolonger_following = [cl.user_info(user_id).username for user_id in nolonger_following]
+    new_followers = [get_username(user_id) for user_id in new_followers]
+    nolonger_followers = [get_username(user_id) for user_id in nolonger_followers]
+    new_following = [get_username(user_id) for user_id in new_following]
+    nolonger_following = [get_username(user_id) for user_id in nolonger_following]
+
 
     # Print the changes
     print(f"New Followers: {new_followers}")
@@ -135,14 +143,29 @@ def compare_data(cl, followers, following):
     print(f"New Following: {new_following}")
     print(f"No Longer Following: {nolonger_following}")
 
-    return new_followers, nolonger_followers, new_following, nolonger_following
+    return (new_followers, nolonger_followers, new_following, nolonger_following)
 
-def write_to_spreadsheet(new_followers, nolonger_followers, new_following, nolonger_following):
 
+def get_profile_info(cl):
+    return cl.user_info_by_username(SCRAPE_USERNAME).model_dump()
+
+def write_to_spreadsheet(follow_change, profile):
+    new_followers, nolonger_followers, new_following, nolonger_following = follow_change
+
+    # Authenticate, open and select worksheet
     gc = gspread.service_account(filename=service_account_path)
-    sh = gc.open_by_key(sheet_key)
-    worksheet = sh.get_worksheet(0)
+    spreadsheet = gc.open_by_key(sheet_key)
+    worksheet = spreadsheet.worksheet(SCRAPE_USERNAME)
 
+    # Construct row to write
+    row = [
+        timeday, profile["username"], profile["full_name"], profile["biography"],
+        profile["media_count"], profile["is_private"], profile["follower_count"],
+        profile["following_count"], len(new_followers), ", ".join(new_followers),
+        len(nolonger_followers), ", ".join(nolonger_followers), len(new_following),
+        ", ".join(new_following), len(nolonger_following), ", ".join(nolonger_following)]
+    
+    worksheet.append_row(row, value_input_option="USER_ENTERED", insert_data_option="INSERT_ROWS")
 
     print("Data written to Google Sheets")
 
@@ -150,21 +173,27 @@ def write_to_spreadsheet(new_followers, nolonger_followers, new_following, nolon
 def main():
     # Login and download follower/following data
     cl = login_user()
+    get_dates()
     followers, following = download_list(cl)
 
     # Compare data
-    compare_data(cl, followers, following)
+    follow_change = compare_data(cl, followers, following)
+    profile = get_profile_info(cl)
+
+    write_to_spreadsheet(follow_change, profile)
 
 
 if __name__ == "__main__":
-    cl = login_user()
-    get_dates()
+    main()
+    # cl = login_user()
+    # get_dates()
 
-    followers, following = read_data(today_date)
+    # followers, following = read_data(today_date)
 
-    new_followers, nolonger_followers, new_following, nolonger_following = compare_data(cl, followers, following)
-    
+    # follow_change = compare_data(cl, followers, following)
+    # profile = get_profile_info(cl)
 
+    # write_to_spreadsheet(follow_change, profile)
 
     # cl = login_user()
     # download_list(cl)
