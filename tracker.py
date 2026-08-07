@@ -76,6 +76,9 @@ def load_config():
         "discord_webhook_url": getattr(credentials, "discord_webhook_url", "") or "",
         "session_file": getattr(credentials, "session_file", "session.json"),
         "delay_range": getattr(credentials, "delay_range", [3, 8]),
+        "service_account_path": getattr(credentials, "service_account_path", "") or "",
+        "sheet_key": getattr(credentials, "sheet_key", "") or "",
+        "worksheet_name": getattr(credentials, "worksheet_name", "") or "",
     }
     return cfg
 
@@ -308,6 +311,82 @@ def diff_lists(old, new):
 
 
 # --------------------------------------------------------------------------
+# Google Sheets backup
+# --------------------------------------------------------------------------
+
+SHEET_HEADER = [
+    "timestamp", "follower_count", "following_count",
+    "lost_followers_count", "lost_followers",
+    "new_followers_count", "new_followers",
+    "lost_following_count", "lost_following",
+    "new_following_count", "new_following",
+    "followers_list", "following_list",
+]
+
+
+class SheetBackup:
+    """Appends one row per run to a Google Sheet so the full follower and
+    following lists survive the Pi's SD card dying. Also used to rebuild
+    the local baseline when data/ is empty but the sheet has rows."""
+
+    def __init__(self, cfg):
+        self.enabled = bool(cfg.get("sheet_key")) and bool(cfg.get("service_account_path"))
+        if not self.enabled:
+            return
+        import gspread
+        gc = gspread.service_account(filename=cfg["service_account_path"])
+        spreadsheet = gc.open_by_key(cfg["sheet_key"])
+        tab = cfg.get("worksheet_name") or cfg["scrape_username"] or cfg["username"]
+        try:
+            self.worksheet = spreadsheet.worksheet(tab)
+        except gspread.exceptions.WorksheetNotFound:
+            self.worksheet = spreadsheet.add_worksheet(
+                title=tab, rows=1, cols=len(SHEET_HEADER))
+            self.worksheet.append_row(SHEET_HEADER)
+
+    def append_run(self, profile, followers, following,
+                   new_followers, lost_followers, new_following, lost_following):
+        if not self.enabled:
+            return
+        row = [
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            profile.get("follower_count", len(followers)),
+            profile.get("following_count", len(following)),
+            len(lost_followers), ", ".join(lost_followers),
+            len(new_followers), ", ".join(new_followers),
+            len(lost_following), ", ".join(lost_following),
+            len(new_following), ", ".join(new_following),
+            ", ".join(sorted(followers)),
+            ", ".join(sorted(following)),
+        ]
+        self.worksheet.append_row(row, value_input_option="RAW",
+                                  insert_data_option="INSERT_ROWS")
+
+    def restore_baseline(self):
+        """Rebuild yesterday's follower/following lists from the last sheet
+        row, for when local data/ has been lost. Returns a snapshot-shaped
+        dict, or None if the sheet is empty/unavailable."""
+        if not self.enabled:
+            return None
+        values = self.worksheet.get_all_values()
+        if len(values) < 2:  # header only, or blank
+            return None
+        header, last = values[0], values[-1]
+        try:
+            followers_raw = last[header.index("followers_list")]
+            following_raw = last[header.index("following_list")]
+            taken_at = last[header.index("timestamp")]
+        except (ValueError, IndexError):
+            return None
+        split = lambda s: [u for u in (p.strip() for p in s.split(",")) if u]
+        return {
+            "taken_at": taken_at,
+            "followers": split(followers_raw),
+            "following": split(following_raw),
+        }
+
+
+# --------------------------------------------------------------------------
 # Main
 # --------------------------------------------------------------------------
 
@@ -351,8 +430,29 @@ def main():
             color=COLOR_ERROR, footer=VERSION)
         sys.exit("Empty scrape; aborting without saving.")
 
+    # ---- Google Sheets backup (optional) -------------------------------
+    try:
+        sheet = SheetBackup(cfg)
+    except Exception as exc:
+        reporter.send_embed(
+            "Warning",
+            f"Google Sheets backup unavailable: `{exc}` - continuing "
+            "without it.",
+            color=COLOR_ERROR, footer=VERSION)
+        sheet = SheetBackup({})  # disabled
+
     # ---- Diff against previous snapshot --------------------------------
     previous = latest_snapshot()
+    if previous is None and sheet.enabled:
+        # Local data/ is gone (fresh install or dead SD card) - try to
+        # recover the baseline from the sheet so diffs stay continuous.
+        try:
+            previous = sheet.restore_baseline()
+        except Exception as exc:
+            print(f"Could not restore baseline from sheet: {exc}")
+        if previous is not None:
+            print(f"Local data missing - baseline restored from Google "
+                  f"Sheet row of {previous['taken_at']}")
     first_run = previous is None
     if first_run:
         new_followers = lost_followers = new_following = lost_following = []
@@ -400,6 +500,19 @@ def main():
         reporter.send_change_category(
             "Users you started following", new_following,
             COLOR_NEW_FOLLOWING)
+
+    # ---- Backup to Google Sheets ---------------------------------------
+    if sheet.enabled and not args.dry_run:
+        try:
+            sheet.append_run(profile, followers, following,
+                             new_followers, lost_followers,
+                             new_following, lost_following)
+            print("Backed up to Google Sheet")
+        except Exception as exc:
+            reporter.send_embed(
+                "Warning",
+                f"Failed to back up this run to Google Sheets: `{exc}`",
+                color=COLOR_ERROR, footer=VERSION)
 
     if args.dry_run and not first_run:
         print("\n--- Diff ---")

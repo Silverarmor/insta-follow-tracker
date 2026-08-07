@@ -61,6 +61,21 @@ cp example_credentials.py credentials.py   # then fill it out
 - `scrape_username` — account to track (empty = the bot account itself)
 - `discord_webhook_url` — Server Settings → Integrations → Webhooks → New Webhook
 
+### Optional: Google Sheets backup
+
+Every run appends one row to a Google Sheet (timestamp, counts, the four
+change lists, and the full follower/following lists). If the machine running
+the tracker loses its `data/` directory — dead SD card, reinstall — the next
+run automatically restores its baseline from the sheet's last row, so diff
+continuity survives.
+
+1. Create a Google Cloud project → enable the **Google Sheets API** → create a
+   **service account** → download its JSON key.
+2. Set `service_account_path` and `sheet_key` (the long ID in the sheet URL)
+   in `credentials.py`.
+3. Share the sheet with the service account's email (Editor). The worksheet
+   tab is created automatically on first run.
+
 ## Usage
 
 ```bash
