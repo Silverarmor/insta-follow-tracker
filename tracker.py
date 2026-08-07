@@ -402,6 +402,9 @@ def main():
                         help="current 2FA code, for non-interactive runs")
     parser.add_argument("--dry-run", action="store_true",
                         help="don't send webhooks, just print the diff")
+    parser.add_argument("--restore-from-sheet", action="store_true",
+                        help="rebuild the diff baseline from the Google "
+                             "Sheet's last row (recovery after losing data/)")
     args = parser.parse_args()
 
     cfg = load_config()
@@ -443,16 +446,21 @@ def main():
 
     # ---- Diff against previous snapshot --------------------------------
     previous = latest_snapshot()
-    if previous is None and sheet.enabled:
-        # Local data/ is gone (fresh install or dead SD card) - try to
-        # recover the baseline from the sheet so diffs stay continuous.
-        try:
-            previous = sheet.restore_baseline()
-        except Exception as exc:
-            print(f"Could not restore baseline from sheet: {exc}")
+    if args.restore_from_sheet:
+        if not sheet.enabled:
+            sys.exit("--restore-from-sheet requires the Google Sheets backup "
+                     "to be configured in credentials.py")
         if previous is not None:
-            print(f"Local data missing - baseline restored from Google "
-                  f"Sheet row of {previous['taken_at']}")
+            sys.exit(f"--restore-from-sheet refused: local snapshots exist "
+                     f"under data/ (latest from {previous['taken_at']}). "
+                     "Delete them first if you really want the sheet's "
+                     "baseline instead.")
+        previous = sheet.restore_baseline()
+        if previous is None:
+            sys.exit("--restore-from-sheet failed: the sheet has no data "
+                     "rows to restore from.")
+        print(f"Baseline restored from Google Sheet row of "
+              f"{previous['taken_at']}")
     first_run = previous is None
     if first_run:
         new_followers = lost_followers = new_following = lost_following = []

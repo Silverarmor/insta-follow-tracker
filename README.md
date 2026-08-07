@@ -65,9 +65,10 @@ cp example_credentials.py credentials.py   # then fill it out
 
 Every run appends one row to a Google Sheet (timestamp, counts, the four
 change lists, and the full follower/following lists). If the machine running
-the tracker loses its `data/` directory — dead SD card, reinstall — the next
-run automatically restores its baseline from the sheet's last row, so diff
-continuity survives.
+the tracker loses its `data/` directory — dead SD card, reinstall — run once
+with `--restore-from-sheet` to rebuild the diff baseline from the sheet's
+last row. Without the flag, a missing `data/` simply starts a fresh baseline
+(no diff on that first run).
 
 1. Create a Google Cloud project → enable the **Google Sheets API** → create a
    **service account** → download its JSON key.
